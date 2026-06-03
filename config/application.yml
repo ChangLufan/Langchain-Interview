@@ -1,0 +1,16 @@
+alioss:
+  access-key-id: ${ALIOSS_ACCESS_KEY_ID}
+  access-key-secret: ${ALIOSS_ACCESS_KEY_SECRET}
+  endpoint: oss-cn-beijing.aliyuncs.com
+  bucket-name: rag-interview
+  prefix: easy-langent/rag
+
+datasource:
+  url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ai_interview}
+  username: ${POSTGRES_USER:postgres}
+  password: ${POSTGRES_PASSWORD:123456}
+  driver-class-name: org.postgresql.Driver
+
+embedding:
+  model: text-embedding-v4
+  batch-size: 10
