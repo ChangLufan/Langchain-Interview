@@ -1,0 +1,337 @@
+{
+  "knowledge_bases": [
+    {
+      "id": "a9984d9771614ffebb78903064112ea9",
+      "name": "chapter1",
+      "filename": "chapter1.md",
+      "created_at": 1780403928704,
+      "updated_at": 1780403928704,
+      "chunk_count": 18,
+      "object": {
+        "storage": "oss",
+        "bucket": "rag-interview",
+        "endpoint": "oss-cn-beijing.aliyuncs.com",
+        "object_key": "easy-langent/rag/a9984d9771614ffebb78903064112ea9/chapter1.md",
+        "uri": "oss://rag-interview/easy-langent/rag/a9984d9771614ffebb78903064112ea9/chapter1.md"
+      },
+      "chunks": [
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-1",
+          "index": 1,
+          "text": "# 第一章 LangChain与LangGraph框架认知\n\n## 前言\n\n欢迎进入easy-langent的学习之旅。作为我们的第一节的内容，核心不是让大家立刻写出复杂的智能体，而是帮大家建立对两个核心框架的基本认知——搞明白它们是什么、能解决什么问题，再亲手把开发环境搭起来，跑通第一个简单案例。就像我们学任何一门新技术一样，先“认识它”，再“上手摸一摸”，基础打扎实了，后面的学习才会更轻松。\n\n所以这一章结束后，你需要做到这几件事：\n\n- 理解AI Agent开发中会遇到的麻烦，知道LangChain和LangGraph各自的定位；\n- 能独立搭好开发环境；能运行两个框架的基础案例，感受到它们的用法差异。\n\n带着这些目标，我们开始今天的学习吧。\n\n## 1.1 为什么需要LangChain和LangGraph\n\n在正式开始前，先跟大家确认下前置知识——不需要你是Python大神，只要能看懂基础的变量、函数，会用终端输入简单命令就行；对大模型有个模糊的概念（比如知道LLM是大语言模型）就足够了，不用深入了解原理。如果这些基础你都具备，那我们可以直接出发；如果有些遗忘也没关系，遇到相关知识点可以去搜索相关的资料，帮你回忆起来。\n\n我们先从一个常见的开发场景说起：假设你想做一个“智能论文助手”，功能很简单，就是帮用户总结论文内容、解答论文里的疑问。如果现在没有任何框架，全靠自己写代码，你会发现要解决一堆麻烦事。\n\n首先，你得自己写代码调用OpenAI、Anthropic这些大模型的API，而且不同厂商的API参数不一样，换个模型就要改一次代码；其次，如果用户问了多个问题，助手要记住之前的对话内容，这部分“对话历史管理”得自己实现；再往后，如果想让助手查最新的文献（也就是工具调用），你还得自己写代码连接文献数据库，还要处理查询结果的解析；要是功能再复杂点，比如让助手分步骤总结论文——先提取核心观点，再整理逻辑，最后生成摘要，这整个流程的管控、中间结果的保存，都会让代码变得特别繁琐。\n\n这就是传统开发模式的三个核心痛点：重复造轮子（每次开发都要重写模型调用、对话管理这些通用代",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-2",
+          "index": 2,
+          "text": "文献（也就是工具调用），你还得自己写代码连接文献数据库，还要处理查询结果的解析；要是功能再复杂点，比如让助手分步骤总结论文——先提取核心观点，再整理逻辑，最后生成摘要，这整个流程的管控、中间结果的保存，都会让代码变得特别繁琐。\n\n这就是传统开发模式的三个核心痛点：重复造轮子（每次开发都要重写模型调用、对话管理这些通用代码）、流程管控复杂（多步骤任务容易出错）、状态维护困难（中间数据不好保存和传递）。\n\n而LangChain和LangGraph，就是为了解决这些麻烦而生的工具。你可以把它们理解成“开发大模型应用的工具箱”和“复杂应用的设计图”——它们把那些通用的、繁琐的功能都封装好了，你不用再纠结底层实现，只要专注于自己的业务场景（比如“论文助手”的核心逻辑）就行。这也是我们要学这两个框架的核心原因：提高开发效率，让智能体开发变得更简单。\n\n## 1.2 LangChain与LangGraph的定义与核心区别\n\n接下来我们逐个认识这两个框架。先记住一个核心结论：它们不是竞争关系，而是互补的——一个帮你快速搭基础，一个帮你管控复杂流程。\n\n### 1.2.1 LangChain：大模型应用的“基础设施工具箱”\n\nLangChain的定位很明确：帮你快速搭建简单到中等复杂度的大模型应用。我更愿意把它比作“乐高积木”——里面有各种各样现成的“积木块”，比如调用大模型的组件、管理对话历史的组件、连接工具的组件等等。你不用自己造积木，只要根据需求把这些积木拼起来，就能快速做出一个简单的应用。\n\n它的核心价值就是降低入门门槛、提高开发效率。比如你想快速做一个文本生成工具，或者一个简单的文档问答工具，用LangChain就能很快实现，不用从零开始写代码。\n\n具体来说，这几种场景用LangChain就很合适：简单的LLM调用（比如生成文本、翻译）、基础的RAG（让模型结合本地文档回答问题）、单步骤的工具调用（比如让模型调用一次计算器）、快速验证想法（比如想试试“用大模型做错题分析”是否可行，用LangChain能快速做出原型）。\n\nLangChain 从 1.0 之后被拆成了三层：\n\n|",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-3",
+          "index": 3,
+          "text": "种场景用LangChain就很合适：简单的LLM调用（比如生成文本、翻译）、基础的RAG（让模型结合本地文档回答问题）、单步骤的工具调用（比如让模型调用一次计算器）、快速验证想法（比如想试试“用大模型做错题分析”是否可行，用LangChain能快速做出原型）。\n\nLangChain 从 1.0 之后被拆成了三层：\n\n| 模块 | 职责 |\n| ------------------ | --------------------------------- |\n| `langchain_core` | 核心抽象（Runnable、BaseParser 等） |\n| `langchain` | 高级工程组件（Chains / Parsers / Memory） |\n| `langchain_openai` | 第三方模型适配 |\n\nLangChain 的三层架构可以直观地理解为：langchain-core是地基和规则，langchain是用地基上的标准构件搭建好的功能房间，而 langchain-openai等集成包则是连接外部服务的门窗和管线。\n\n💡 为何要这样分层？\n这种架构的核心优势在于关注点分离和生态系统的健康发展。\n\n- 核心团队可以更专注：LangChain的核心团队只需维护好langchain-core的稳定性和抽象能力，而不必陷入对海量第三方服务API变更的维护工作中。\n- 社区可以更开放地共建：任何第三方服务都可以按照langchain-core定义的规范，开发自己的集成包（如langchain-google-genai, langchain-community等），共同丰富LangChain的生态。\n- 开发者可以更灵活：你可以根据需要选择性地安装和更新特定集成，避免了安装一个庞然大物般的单体包。这种模块化设计也使得整个框架更易于维护和扩展。\n\n### 1.2.2 LangGraph：复杂应用的“架构设计框架”\n\n如果说LangChain是“乐高积木”，那LangGraph就是“建筑设计图”。当你想搭建“高楼大厦”——也就是复杂的大模型应用时，光有积木不够",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-4",
+          "index": 4,
+          "text": "地安装和更新特定集成，避免了安装一个庞然大物般的单体包。这种模块化设计也使得整个框架更易于维护和扩展。\n\n### 1.2.2 LangGraph：复杂应用的“架构设计框架”\n\n如果说LangChain是“乐高积木”，那LangGraph就是“建筑设计图”。当你想搭建“高楼大厦”——也就是复杂的大模型应用时，光有积木不够，还需要设计图来规划积木的摆放顺序、结构逻辑。LangGraph就是基于LangChain的这个“设计图”，专门处理那些多步骤、需要协作的复杂任务。\n\n它的核心价值是支持状态管理、复杂流程管控和多智能体协作，正好弥补了LangChain处理复杂任务的短板。比如刚才说的“分步骤总结论文”，从上传论文到提取观点，再到整理逻辑、生成摘要，整个流程的顺序管控、中间结果的保存，用LangGraph就能很清晰地实现。\n\n这些场景适合用LangGraph：多步骤流程（比如刚才说的论文总结多步骤任务）、需要保存中间结果的场景（比如记住用户上一步的需求）、多智能体协作（比如让一个“检索Agent”找文献，一个“分析Agent”总结观点，再用一个“协调Agent”分配任务）、需要人机交互的流程（比如执行到某一步需要用户确认信息，再继续往下走）。\n\n### 1.2.3 两个框架的核心关系\n\n最后再帮大家理清两者的关系，避免混淆：首先是从属关系，LangGraph不是独立于LangChain的，它是LangChain生态的进阶扩展，依赖LangChain的核心组件（比如模型调用、工具这些“积木”），只是在流程管控、状态管理上做了增强；其次是互补关系，简单的任务用LangChain（快、简单），复杂的任务用LangGraph（稳、可控），实际开发中我们经常会把它们融合起来用——用LangChain搭好基础组件，再用LangGraph设计复杂的流程。\n\n![1-1](/img/1-1.png)\n\n再用一个形象的类比帮大家记住：\n\n- 用LangChain开发，像用积木快速拼一个小房子（简单、快）；\n- 用LangGraph开发，像用积木+设计图建一栋高楼（复杂、但结构清晰、可扩展）。",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-5",
+          "index": 5,
+          "text": "起来用——用LangChain搭好基础组件，再用LangGraph设计复杂的流程。\n\n![1-1](/img/1-1.png)\n\n再用一个形象的类比帮大家记住：\n\n- 用LangChain开发，像用积木快速拼一个小房子（简单、快）；\n- 用LangGraph开发，像用积木+设计图建一栋高楼（复杂、但结构清晰、可扩展）。\n\n## 1.3 实操环节：搭建开发环境\n\n讲完了理论认知，接下来就是最关键的实操环节——搭开发环境。\n\n这一步是所有后续学习的基础，跟着教程一步步操作，遇到问题不用慌，可以寻求大模型来帮忙解决。\n\n### 1.3.1 环境要求\n\n1. Python版本：3.10及以上（推荐3.10，兼容性最好）；\n2. 网络：能访问互联网（需要下载依赖、调用大模型API）；\n3. 编辑器：推荐PyCharm（专业版/社区版均可）或VS Code（需安装Python插件）。\n\n### 1.3.2 具体步骤（Windows/Mac通用）\n\n#### 1.3.2.1 步骤1：创建虚拟环境（避免依赖冲突）\n\n在开始项目之前，**请务必先创建虚拟环境**，避免不同项目之间的 Python 依赖相互污染。\n\n**方式一：使用 `venv`（Python 自带，通用方案）**\n\n打开终端/命令行，执行以下命令：\n\n```bash\n# 1.新创建一个文件夹 easy-langent\n\n# Windows\npython -m venv langent-env\n# Mac / Linux\npython3 -m venv langent-env\n\n# 2. 激活虚拟环境\n# Windows（cmd）\nlangent-env\\Scripts\\activate\n# Windows（PowerShell）\n.\\langent-env\\Scripts\\Activate.ps1\n# Mac / Linux\nsource langent-env/bin/activate\n```\n\n**方式二：使用 Conda**\n\n```bash\n# 1. 创建虚拟环境（建议 Python 3.10）\nconda cr",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-6",
+          "index": 6,
+          "text": "PowerShell）\n.\\langent-env\\Scripts\\Activate.ps1\n# Mac / Linux\nsource langent-env/bin/activate\n```\n\n**方式二：使用 Conda**\n\n```bash\n# 1. 创建虚拟环境（建议 Python 3.10）\nconda create -n langent-env python=3.10 -y\n\n# 2. 激活虚拟环境\nconda activate langent-env\n```\n\n**方式三：使用 uv**\n\n[uv](https://github.com/astral-sh/uv) 是新一代 Python 包管理器，由 Rust 编写，拥有超快的安装速度和跨平台支持。相比 Conda，uv 更轻量、依赖解析更智能，是 Agent 开发中推荐的环境管理工具。\n\n**uv 优势：**\n\n- ⚡ **极速安装**：比 pip 快 10-100 倍\n- 📦 **智能依赖解析**：自动处理依赖冲突\n- 🔄 **统一管理**：同时管理项目依赖和虚拟环境\n- 🐍 **多版本 Python**：轻松切换不同 Python 版本\n\n**初始化项目**\n\n打开终端并导航到对应目录\n\n```bash\n# 创建项目目录和虚拟环境\n# 全系统通用\nuv init easy-langent --python 3.10\ncd easy-langent\nuv venv\n```\n\n**后续操作**\n\n运行脚本：使用 `uv run xxx.py` 替代 `python xxx.py`\n\n包管理：使用 `uv pip` 代替 `pip` 命令\n\n激活虚拟环境：\n\n```bash\n# Windows（cmd）\n.venv\\Scripts\\activate\n# Windows（PowerShell）\n.\\.venv\\Scripts\\Activate.ps1\n# Mac / Linux\nsource .venv/bin/activate\n```\n\n---\n\n**可选：配置国内镜像源（提升安装速度）**\n国内网络安装",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-7",
+          "index": 7,
+          "text": "s（cmd）\n.venv\\Scripts\\activate\n# Windows（PowerShell）\n.\\.venv\\Scripts\\Activate.ps1\n# Mac / Linux\nsource .venv/bin/activate\n```\n\n---\n\n**可选：配置国内镜像源（提升安装速度）**\n国内网络安装 Python 包较慢时，建议配置 PyPI（pip） 国内镜像源。\n\n> 说明：本文以**清华镜像**为例，也可根据网络状况替换为**中科大**或其他国内PyPI镜像。\n> 无论使用 venv 还是 Conda 环境，课程中统一使用 `pip` 安装依赖，**只需配置 pip 镜像**。\n>\n> Conda 提供了原生的包管理能力（`conda install`），为避免混用产生冲突，**此处不作深入介绍，了解即可**。\n\n**1. pip（venv / Conda 环境通用）**\n\n设为默认（永久配置，推荐）\n\n```bash\n# 清华镜像\npip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple\n\n# 中科大镜像（备选，二选一）\n# pip config set global.index-url https://mirrors.ustc.edu.cn/pypi/simple\n```\n\n临时使用（仅当前命令生效）：\n\n```bash\n# 清华镜像\npip install 包名 -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple\n\n# 中科大镜像（备选）\n# pip install 包名 -i https://mirrors.ustc.edu.cn/pypi/simple\n\n# 替换实际要安装的包名，比如：\n# pip install langchain -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple\n```\n\n**2.",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-8",
+          "index": 8,
+          "text": "stall 包名 -i https://mirrors.ustc.edu.cn/pypi/simple\n\n# 替换实际要安装的包名，比如：\n# pip install langchain -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple\n```\n\n**2. uv（uv 环境专用）**\n\n编辑或创建配置文件\n\nLinux/Unix：在 `~/.config/uv/uv.toml` 或者 `/etc/uv/uv.toml`\nWindows：在 `%AppData%\\uv\\uv.toml` 或者 `%ProgramData%\\uv\\uv.toml`\n\n填写如下内容\n\n```toml\n[[index]]\nurl = \"https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/\"\ndefault = true\n```\n\n中科大镜像（备选，二选一）\n\n```toml\n[[index]]\nurl = \"https://mirrors.ustc.edu.cn/pypi/simple\"\ndefault = true\n```\n\n---\n\n⚠️ 注意事项：\n\n- 一个项目 **只使用一种虚拟环境方式（venv、conda或uv）**\n- 后续所有 `pip install` / `python xxx.py` 操作，都必须在已激活的虚拟环境中进行\n- uv 使用 `uv run xxx.py` 替代 `python xxx.py` 和使用 `uv pip` 代替 `pip` 命令不需要手动激活虚拟环境\n\n#### 1.3.2.2 步骤2：安装核心依赖\n\n在激活的虚拟环境中，执行以下命令安装LangChain、LangGraph及常用依赖：\n\n**常规python/conda 安装依赖**\n\n```bash\n# 安装LangChain核心库\npip install langchain\n# 安装LangGraph\npip install langgraph\n# 安装OpenAI依赖（用于",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-9",
+          "index": 9,
+          "text": "中，执行以下命令安装LangChain、LangGraph及常用依赖：\n\n**常规python/conda 安装依赖**\n\n```bash\n# 安装LangChain核心库\npip install langchain\n# 安装LangGraph\npip install langgraph\n# 安装OpenAI依赖（用于调用OpenAI模型，我们案例用这个）\npip install openai\npip install langchain_openai\n\n# 安装其他辅助依赖\npip install python-dotenv # 用于管理环境变量（存储API密钥）\npip install ipykernel # 用于在Jupyter Notebook中运行代码\n```\n\n**uv 安装依赖**\n\n如果下载速度很慢记得上方添加国内源\n\n```bash\nuv add langchain langchain-openai langgraph langchain-community ipykernel\n```\n\n**安装成功验证**\n\n激活虚拟环境，在终端输入`python`，进入Python交互环境，依次执行以下代码无报错即可：\n\n```python\nimport langchain\nimport langgraph\nimport openai\nimport importlib\nfrom dotenv import load_dotenv\nload_dotenv()\n# 如按本文前面步骤操作，此时项目中不存在 .env 文件，`load_dotenv()` 函数返回 `False` 是正常的\nprint(\"LangChain版本：\", langchain.__version__)\nprint(\"LangGraph版本：\", importlib.metadata.version(\"langgraph\"))\nprint(\"OpenAI版本：\", openai.__version__)\n```\n\n运行结果示例（版本以实际为准）\n\n```bash\nFalse\nLangChain版本：",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-10",
+          "index": 10,
+          "text": "ersion__)\nprint(\"LangGraph版本：\", importlib.metadata.version(\"langgraph\"))\nprint(\"OpenAI版本：\", openai.__version__)\n```\n\n运行结果示例（版本以实际为准）\n\n```bash\nFalse\nLangChain版本： 1.2.15\nLangGraph版本： 1.1.6\nOpenAI版本： 2.31.0\n```\n\n> **注意：** LangChain 和 LangGraph 必须安装**1.0.0以后**的版本，1.0.0以前的版本与1.0.0以后的版本不兼容，会对学习产生比较大的影响！！！\n\n#### 1.3.2.3 步骤3：配置API密钥\n\nLangChain 的主要功能依赖大模型， 调用云端大模型则需要 API 密钥（相当于\"通行证\"）。\n\n为了安全，一般**不会把密钥直接写在代码里**，而是存放在独立的配置文件中，再通过代码读取，避免在分享代码时泄露密钥信息。\n\n**步骤3.1：获取API密钥**\n\n你需要在模型服务商官网注册账号并获取 API Key。\n\n下表列出了一些常见的服务商：\n\n| 服务商 | 官网 |\n| ------------------- | ----------------------------------------- |\n| **DeepSeek** | <https://platform.deepseek.com/usage> |\n| **通义千问（Qwen）** | <https://bailian.console.aliyun.com/> |\n| **ChatGPT（OpenAI）** | <https://chatgpt.com/> |\n| **智谱 AI（GLM）** | <https://bigmodel.cn/> |\n| **硅基流动** | <https://cloud.siliconflow.cn/> |\n\n> **说明：**\n> 1. 本教程使用 **DeepSeek 官方 API** 作为示例，你可以根据个人情况",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-11",
+          "index": 11,
+          "text": "tgpt.com/> |\n| **智谱 AI（GLM）** | <https://bigmodel.cn/> |\n| **硅基流动** | <https://cloud.siliconflow.cn/> |\n\n> **说明：**\n> 1. 本教程使用 **DeepSeek 官方 API** 作为示例，你可以根据个人情况选择其他服务商。\n> 2. 案例代码基于 **OpenAI 兼容格式**调用模型。如果你选择的服务商同时提供与 OpenAI 或 Anthropic 兼容的多种 API 格式，\n> 请注意使用 **OpenAI 兼容**的接口。\n> 3. 注册后请前往对应服务商的官方文档，查看 API Key 和 BASE_URL 的获取方式。\n\n> ⚠️ **特别注意**：API Key 请妥善保存，切勿泄露给他人或上传到公开仓库，密钥被盗用可能导致严重的经济损失或隐私泄露。\n\n**步骤3.2：创建 .env 文件**\n\n在项目根目录（easy-langent 文件夹）中，新建一个名为 `.env` 的文件，或者直接复制根目录下的 `.env.example` 模板并重命名为 `.env`。\n\n> **Windows 用户注意**：系统可能隐藏文件扩展名，请先在文件资源管理器中点击【查看】→【显示】→ 勾选【文件扩展名】，\n> 确认文件名确实是 `.env`（没有额外后缀，比如 `.env.txt`）。\n\n用编辑器打开 `.env` 文件，填入你自己的 API Key 和服务商提供的 OpenAI 兼容 BASE_URL（如DeepSeek: https://api.deepseek.com）：\n\n```env\nAPI_KEY=\"YOUR_API_KEY\"\nBASE_URL=\"YOUR_BASE_URL\"\n```\n\n**步骤3.3步：在代码中读取密钥**\n\n```python\nfrom dotenv import load_dotenv\nimport os\n\nload_dotenv() # 读取 .env 文件中的变量\nAPI_KEY = os.getenv(\"API_",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-12",
+          "index": 12,
+          "text": "BASE_URL=\"YOUR_BASE_URL\"\n```\n\n**步骤3.3步：在代码中读取密钥**\n\n```python\nfrom dotenv import load_dotenv\nimport os\n\nload_dotenv() # 读取 .env 文件中的变量\nAPI_KEY = os.getenv(\"API_KEY\")\nBASE_URL = os.getenv(\"BASE_URL\")\n```\n\n**步骤3.4：验证配置是否成功**\n\n在终端运行以下代码，如果能正常输出模型回复，说明密钥配置成功：\n\n```python\nimport os\nfrom dotenv import load_dotenv\nfrom langchain_openai import ChatOpenAI\n\nload_dotenv()\n\nAPI_KEY = os.getenv(\"API_KEY\")\nBASE_URL = os.getenv(\"BASE_URL\")\n\nif not API_KEY:\n raise ValueError(\"未检测到 API_KEY，请检查 .env 文件是否配置正确\")\nif not BASE_URL:\n raise ValueError(\"未检测到 BASE_URL，请检查 .env 文件是否配置正确\")\n\nllm = ChatOpenAI(\n api_key=API_KEY,\n base_url=BASE_URL,\n model=\"deepseek-v4-flash\", # 注意填写服务商指定的模型名称（见下方说明）\n)\n\nresponse = llm.invoke(\"你好，请回复'配置成功'\")\nprint(response.content)\n```\n\n> 📌 **关于模型名称**：同一个模型在不同服务商的名称可能不同，请以服务商官方文档为准。\n> 例如 DeepSeek V4 Flash 模型，在 DeepSeek 官方的名称是 `deepseek-v4-flash`，而在硅基流动则是 `deepseek-ai/DeepSeek-V4-Flash`。",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-13",
+          "index": 13,
+          "text": "```\n\n> 📌 **关于模型名称**：同一个模型在不同服务商的名称可能不同，请以服务商官方文档为准。\n> 例如 DeepSeek V4 Flash 模型，在 DeepSeek 官方的名称是 `deepseek-v4-flash`，而在硅基流动则是 `deepseek-ai/DeepSeek-V4-Flash`。\n\n如果看到模型正常回复，恭喜你，环境配置全部完成！\n\n> 如果报错，常见原因：① `.env` 文件不在项目根目录下；② API_KEY 填写有误或余额不足；③ BASE_URL 不匹配。\n\n### 1.3.3 常见错误解决\n\n- 错误1：“pip不是内部或外部命令”——解决：检查Python是否添加到系统环境变量，或用“python -m pip”代替“pip”；\n- 错误2：安装依赖时超时——解决：用国内镜像源，见1.3.2.1可选配置；\n- 错误3：激活虚拟环境失败（PowerShell）——解决：以管理员身份打开PowerShell，执行“Set-ExecutionPolicy RemoteSigned”，选择“Y”允许；\n\n## 1.4 上手体验：两个框架的“Hello World”案例\n\n环境搭建完成后，我们用两个最简单的案例体验LangChain和LangGraph的核心用法——不用纠结复杂逻辑，先跑通代码，感受框架的使用流程。\n\n### 1.4.1 LangChain案例：简单文本生成\n\n> 功能：调用OpenAI模型，生成一段“AI学习建议”。\n\n```python\n# 1. 导入模块\nimport os\nfrom dotenv import load_dotenv\nfrom langchain_openai import ChatOpenAI\n\n# 2. 加载 .env 环境变量\nload_dotenv()\n\n# 3. 配置 API Key\nAPI_KEY = os.getenv(\"API_KEY\")\nBASE_URL = os.getenv(\"BASE_URL\")\n\nif not API_KEY:\n raise ValueError(\"",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-14",
+          "index": 14,
+          "text": "hatOpenAI\n\n# 2. 加载 .env 环境变量\nload_dotenv()\n\n# 3. 配置 API Key\nAPI_KEY = os.getenv(\"API_KEY\")\nBASE_URL = os.getenv(\"BASE_URL\")\n\nif not API_KEY:\n raise ValueError(\"未检测到 API_KEY，请检查 .env 文件是否配置正确\")\nif not BASE_URL:\n raise ValueError(\"未检测到 BASE_URL，请检查 .env 文件是否配置正确\")\n\n# 4. 初始化大模型\nllm = ChatOpenAI(\n api_key=API_KEY,\n base_url=BASE_URL,\n model=\"deepseek-v4-flash\", # 注意：根据你使用的模型修改名称！！！！ 后面章节不再继续说明\n temperature=0.3\n)\n\n# 5. 构造 Prompt（教学阶段用字符串更直观）\nprompt = \"请写一段50字左右的 AI 学习建议，语言简洁、实用，适合初学者。\"\n\n# 6. 调用模型\nresponse = llm.invoke(prompt)\n\n# 7. 输出结果\nprint(\"生成的学习建议：\")\nprint(response.content)\n\n```\n\n代码解释：\n\n- ChatOpenAI：LangChain封装的OpenAI对话模型接口，不用我们自己写HTTP请求调用API；\n- invoke：模型调用方法，传入格式化后的提示词，返回生成结果。\n\n运行结果示例：\n\n```\n生成的学习建议：\n1. 先动手：从简单项目开始，跑通代码比纯理论更重要。\n2. 重基础：掌握Python、线性代数和概率论核心概念。\n3. 读代码：多分析经典开源项目，理解实现逻辑。\n4. 常复现：尝试复现论文基础模型，训练调试能力。\n5. 保持好奇：关注AI动态，用实践验证新想法。\n\n（注：共50字，聚焦可执行步骤，避免抽象建议。）\n```\n\n### 1.4.2 LangGraph案例：基础工作",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-15",
+          "index": 15,
+          "text": "重基础：掌握Python、线性代数和概率论核心概念。\n3. 读代码：多分析经典开源项目，理解实现逻辑。\n4. 常复现：尝试复现论文基础模型，训练调试能力。\n5. 保持好奇：关注AI动态，用实践验证新想法。\n\n（注：共50字，聚焦可执行步骤，避免抽象建议。）\n```\n\n### 1.4.2 LangGraph案例：基础工作流执行\n\n> 功能：实现一个简单的“两步工作流”——第一步生成学习建议，第二步对建议进行精简。\n\n```python\n# 1. 导入需要的模块\nimport os \nfrom langchain_openai import ChatOpenAI\nfrom langgraph.graph import StateGraph, START, END\nfrom typing import TypedDict\nfrom dotenv import load_dotenv\n\n# 2. 加载API密钥\nload_dotenv()\n\n# 3. 配置 API Key\nAPI_KEY = os.getenv(\"API_KEY\")\nBASE_URL = os.getenv(\"BASE_URL\")\n\nif not API_KEY:\n raise ValueError(\"未检测到 API_KEY，请检查 .env 文件是否配置正确\")\nif not BASE_URL:\n raise ValueError(\"未检测到 BASE_URL，请检查 .env 文件是否配置正确\")\n\n# 4. 初始化大模型（和LangChain案例一样）\nllm = ChatOpenAI(\n api_key=API_KEY,\n base_url=BASE_URL,\n model=\"deepseek-v4-flash\", # 注意：根据你使用的模型修改名称！！！！ 后面章节不再继续说明\n temperature=0.3\n)\n\n# 5. 定义 State\nclass WorkflowState(TypedDict, total=False):\n user_role: str # 存储用户角色\n origina",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-16",
+          "index": 16,
+          "text": "eek-v4-flash\", # 注意：根据你使用的模型修改名称！！！！ 后面章节不再继续说明\n temperature=0.3\n)\n\n# 5. 定义 State\nclass WorkflowState(TypedDict, total=False):\n user_role: str # 存储用户角色\n original_advice: str # 存储原始学习建议\n simplified_advice: str # 存储精简后的建议\n\n# 6. 定义节点\ndef generate_advice(state: WorkflowState):\n prompt = f\"给{state['user_role']}写一段50字左右的 AI 学习建议。\"\n result = llm.invoke(prompt)\n return {\"original_advice\": result.content}\n\ndef simplify_advice(state: WorkflowState):\n prompt = f\"把下面的学习建议精简到30字以内：{state['original_advice']}\"\n result = llm.invoke(prompt)\n return {\"simplified_advice\": result.content}\n\n# 7. 构建工作流\nworkflow = StateGraph(WorkflowState)\n\nworkflow.add_node(\"generate\", generate_advice)\nworkflow.add_node(\"simplify\", simplify_advice)\n\nworkflow.add_edge(START, \"generate\")\nworkflow.add_edge(\"generate\", \"simplify\")\nworkflow.add_edge(\"simplify\", END)\n\napp = workflow.compile()\n\n# 8. 执行\nresult = app.invoke({\"user_rol",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-17",
+          "index": 17,
+          "text": "TART, \"generate\")\nworkflow.add_edge(\"generate\", \"simplify\")\nworkflow.add_edge(\"simplify\", END)\n\napp = workflow.compile()\n\n# 8. 执行\nresult = app.invoke({\"user_role\": \"高校学生\"})\n\n# 9. 输出\nprint(\"原始学习建议：\")\nprint(result[\"original_advice\"])\nprint(\"\\n精简后学习建议：\")\nprint(result[\"simplified_advice\"])\n```\n\n代码解释（重点理解LangGraph核心概念）：\n\n- State（状态）：WorkflowState类定义的结构，相当于工作流的“共享数据容器”，用于传递和存储中间结果（比如第一步的原始建议、第二步的精简建议）；\n- Node（节点）：每个节点对应一个函数，负责完成一个具体任务（生成建议、精简建议），函数接收状态作为输入，处理后返回更新后的状态；\n- Edge（边）：定义节点的执行顺序（START→generate→simplify→END），相当于工作流的“流程规划图”；\n- compile（编译）：把状态图、节点、边的定义，转换成可执行的工作流实例；\n- invoke（执行）：传入初始状态，工作流会按定义的顺序执行节点，最终返回完整的状态（包含所有中间结果和最终结果）。\n\n运行结果示例：\n\n```\n原始学习建议：\nAI时代，学习建议：掌握基础数学与编程，动手实践项目；保持批判思维，关注伦理；善用AI工具辅助学习，但别依赖；持续跟进前沿，加入社群交流。最重要的是，保持好奇与热情。\n\n精简后学习建议：\n学基础，重实践，持批判，善用AI，追前沿，保热情。\n```\n\n对比LangChain案例：这个案例的核心是“流程管控”——我们明确定义了“生成→精简”的顺序，并且用状态存储了中间结果，这就是LangGraph处理多步骤任务的优势。\n\n## 1.5 本章小结\n\n1. 核心认知：LangChain是“",
+          "source_name": "chapter1.md"
+        },
+        {
+          "id": "a9984d9771614ffebb78903064112ea9-18",
+          "index": 18,
+          "text": "精简后学习建议：\n学基础，重实践，持批判，善用AI，追前沿，保热情。\n```\n\n对比LangChain案例：这个案例的核心是“流程管控”——我们明确定义了“生成→精简”的顺序，并且用状态存储了中间结果，这就是LangGraph处理多步骤任务的优势。\n\n## 1.5 本章小结\n\n1. 核心认知：LangChain是“基础工具包”（快速搭简单应用），LangGraph是“架构框架”（管控复杂流程），两者互补融合；\n2. 实操重点：开发环境搭建（虚拟环境+依赖+API密钥）是后续所有学习的基础，必须跑通；\n3. 框架核心：LangChain的核心是“组件拼接”，LangGraph的核心是“状态+节点+流程”。\n\n## 1.6 本章练习\n\n1. 复现本章两个案例的代码，确保能成功运行；\n2. 修改LangChain案例的Prompt，把“AI学习建议”改成“LangChain学习建议”，观察生成结果；\n3. 修改LangGraph案例的工作流，添加一个“第三步节点”（比如“把精简后的建议翻译成英文”），重新编译并执行；\n4. 思考：如果要开发一个“智能问答机器人”（只需要简单对话，不用多步骤），应该用LangChain还是LangGraph？为什么？",
+          "source_name": "chapter1.md"
+        }
+      ],
+      "database": {
+        "stored": true,
+        "chunk_count": 18,
+        "model": "text-embedding-v4"
+      }
+    },
+    {
+      "id": "fbf8e3e77cfa41e1b240ccd89f56d48e",
+      "name": "node",
+      "filename": "node.md",
+      "created_at": 1780401608996,
+      "updated_at": 1780401608996,
+      "chunk_count": 30,
+      "object": {
+        "storage": "oss",
+        "bucket": "rag-interview",
+        "endpoint": "oss-cn-beijing.aliyuncs.com",
+        "object_key": "easy-langent/rag/fbf8e3e77cfa41e1b240ccd89f56d48e/node.md",
+        "uri": "oss://rag-interview/easy-langent/rag/fbf8e3e77cfa41e1b240ccd89f56d48e/node.md"
+      },
+      "chunks": [
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-1",
+          "index": 1,
+          "text": "# 自我介绍\n\n面试官你好，我叫常路凡，目前是河南理工大学计算机技术专业研二学生，本科毕业于河南科技大学。我应聘的是贵公司【后端开发】这一实习岗位。一直一来都对java后端以及RAG和Agent方面深入展开学习，在校期间借助AI做过一些java传统单体项目以及融合的AI应用开发，目前正在进一步学习一些基于python的开源的agent项目。英语方面通过CET-6，能顺利阅读英文文档，实践方面有多年的学生干部经历，有着较强的团队组织协调和沟通能力。希望能有机会在贵公司实习，协助项目开发，以上是我的自我介绍，谢谢。\n\n## 反问\n\n公司主要做的业务、都有哪些团队，协作模式？\n\n公司对实习生有转正名额吗？\n\n这个岗位的培养计划和晋升机制是怎么样的？\n\n面试结果？\n\n# 知识点\n\n## AI智能面试平台\n\n### Apache Tika与文档处理\n\n基于检测器和解析器双层架构，调用内置detect方法获取文件头部魔数，对比文件拓展名防止伪造类型，根据文档类型，内部自动路由到对应格式专用解析器，提取正文内容和元数据。\n\n#### 嵌入噪声干扰\n\n针对文档中的页眉、页脚、背景图、图片、表格边框等噪声文本会干扰下游AI分析，Tika利用其过滤机制跳过嵌入干扰内容\n\n#### 文档清洗\n\n清除ASCLL字符、换页符、制表符、图片名、超链接、连续符号、多余空行等\n\n#### 大文档\n\n使用分片上传，每片上传记录分片编号，最后合并所有分片。失败时清理已上传的分片\n\n#### 文档去重\n\n通过计算文件的SHA-256（十六进制哈希字符串）,相同文件就哈希相同，相同则不重复解析。\n\n### Redis Stream\n\n项目中简历分析、知识库向量化、面试出题这些需要调用LLM的任务耗时较长，如果同步执行会导致用户长时间等待，前端容易超时\n\n设计基于Redis Stream的消费组异步架构，Controller只需要做轻量级校验后通过状态流转立即返回当前状态，并发送文件到Stream\n\n项目实现3个独立Redis Stream，每个Stream对应一个业务场景的消费组，不同组会各自独立消费处理所有",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-2",
+          "index": 2,
+          "text": "耗时较长，如果同步执行会导致用户长时间等待，前端容易超时\n\n设计基于Redis Stream的消费组异步架构，Controller只需要做轻量级校验后通过状态流转立即返回当前状态，并发送文件到Stream\n\n项目实现3个独立Redis Stream，每个Stream对应一个业务场景的消费组，不同组会各自独立消费处理所有信息，组内多个消费者实例会竞争消息\n\n竞争到消息的消费者会先Tika解析文档，然后调用LLM分析解析过的文本内容，实现负载均衡\n\n知识库向量化任务中消费者实例还会解析文本并分块，为每个块添加元数据（知识库id）用于关联查询，调用嵌入模型生成向量，并存入向量表中，并更新任务状态，并通过ACK机制消息确认，防止其他消费者再来处理\n\n当LLM调用失败时进行3次重试，超时后记录错误日志，不会阻塞其他任务\n\n文件上传应该使用标准的HTTP（POST/GET/PUT/DELETE）方法，并且只用发送一次请求，Websocket适合实时双向通信，这里使用占用连接池资源容易造成资源浪费，并且复杂度过高。\n\n### RAG\n\n#### 索引构建\n\n使用Tika文档解析——文本清洗——智能分块——批量向量化——存入pgvector——构建HNSW索引\n\n#### 问答检索\n\n用户提问——询问重写——问题向量化——HNSW向量检索——Top-k重排序——组装prompt——生成答案\n\n#### 维度\n\n低纬度存储小，速度快，但语义表达弱，高维度相反，1024维阿里云嵌入模型标准输出维度，在检索准确率和计算开销之间取得最佳平衡。\n\n#### 分块策略\n\n512tokens/块，重叠50tokens保证上下文连贯，按自然段落分割\n\n#### HNSW索引\n\n构建多层**图结构**，本质是最近邻算法，利用图的连通性寻找邻居，先大幅度节点跨越搜索，再局部精细搜索\n\n#### 多轮对话\n\n多轮问答中，由于用户提问的问题不完整，需要利用问题重写来结合历史会话，并根据原始查询字符长度采用不同召回策略，短查询由于信息量少则降低召回限制分数扩大topk，长查询由于语义更明确则提高召回限制分数降低",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-3",
+          "index": 3,
+          "text": "*图结构**，本质是最近邻算法，利用图的连通性寻找邻居，先大幅度节点跨越搜索，再局部精细搜索\n\n#### 多轮对话\n\n多轮问答中，由于用户提问的问题不完整，需要利用问题重写来结合历史会话，并根据原始查询字符长度采用不同召回策略，短查询由于信息量少则降低召回限制分数扩大topk，长查询由于语义更明确则提高召回限制分数降低topk，检索生成答案输出后更新数据库。\n\n最多保留对话数和历史对话最大字符数配置在yml中\n\n#### 防越权\n\n在知识库实体中添加用户id字段，RAG查询接口必须传入id，在向量检索的service层添加用户权限校验，过滤不属于本用户上传的知识库向量。\n\n#### 元数据\n\n知识库元数据包括id、name、用于去重的哈希值、分组、文件大小、上传时间、访问次数、向量化分块数量等信息；向量元数据存储的只有隶属的知识库id\n\n### Skill\n\n#### 文本出题\n\n所有方向靠一个大的prompt会导致后端、前端、算法、测试题目混在一起不好维护。\n\n通过把不同面试方向抽像成Skill资源，每个skill包括一个md文档文件包括**面试官人设、出题原则**等，和一个yml配置文件包括**题目优先级、题目绑定的参考文档ref路径**等后端配置项。\n\n出题时根据用户选择的方向的skill_id加载对应skill，**将md中人格信息直接拼接给systemprompt**，保证结构化输出稳定。\n\n结合yml中的题目配置优先级（保底必有一道always级的题，分类覆盖core/normal级题目，如果还有空余就轮转分配core级的题目）保证分类覆盖调用LLM。\n\n如果用户上传了简历，将解析后的简历文本利用LLM生成60%简历题，剩下40%围绕基础八股出题\n\n如果要新增方向，只需要编写好对应md文档和yml配置到指定目录即可，项目启动时扫描所有方向的skill文档和yml配置\n\n#### 语音出题\n\n语音面试是多轮流式，若把各方向 SKILL 全文都塞进 system 会占上下文，题目生成缓慢\n\n基于Agent Skill——会话创建时MCP Client依据MCP协",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-4",
+          "index": 4,
+          "text": "题\n\n如果要新增方向，只需要编写好对应md文档和yml配置到指定目录即可，项目启动时扫描所有方向的skill文档和yml配置\n\n#### 语音出题\n\n语音面试是多轮流式，若把各方向 SKILL 全文都塞进 system 会占上下文，题目生成缓慢\n\n基于Agent Skill——会话创建时MCP Client依据MCP协议获取MCP Server中的所有方向SKILL.md（name、describe）建索引**，根据选择的方向的skill_id，LLM自行判断在**必要时调用 SkillsTool 按需加载该方向SKILL.md详细全文内容，在实时体验和角色一致性之间做权衡。\n\n### 评估\n\n评估阶段，采用统一评估服务，统一承载“问题、答案、分类”\n\n由于还要传简历摘要、评分标准、参考材料、输出格式，上下文窗口有限，因此题目数量过大则分批调用llm评分，并统一做json约束和重试，将各批次最终结果合并生成结构化报告。\n\n将题目和回答组装成Prompt（注入参考答案基线）发送给LLM，要求LLM返回符合特性JSON的对象（逐题评价、逐维评价（Mysql、Redis等）、综合评价），最后逐题合并，二次总结并给出优势和建议\n\n总长度过长则分维度评价（Mysql、Redis等）\n\n评分权重（准确性、完整性、深度、表达）定义在Prompt模板中，从多维度加权评价评分\n\n评估任务时利用Redis Stream提供消息持久化和消费者读取，评估任务不会因应用重启而丢失，也不需要额外部署。\n\n### WebSocket\n\n语音面试是双向实时交互。前端要持续上传音频，后端要持续推送字幕、AI 文本和音频片段。\n\n普通 HTTP 更适合一次请求一次响应，而 WebSocket 更适合这种长连接、双向通信场景。\n\n首先websocket握手成功后建立连接与语音识别服务初始化，接收用户音频使用通义千问实时语音ASR模型识别并流式输出识别得文本，并自动过滤ai说话时麦克风输入，句子结束后触发llm推理生成文本回复，利用统一千问的音频合成tts模型生成音频并推送至前端，并实时显示字幕。\n\n###",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-5",
+          "index": 5,
+          "text": "更适合这种长连接、双向通信场景。\n\n首先websocket握手成功后建立连接与语音识别服务初始化，接收用户音频使用通义千问实时语音ASR模型识别并流式输出识别得文本，并自动过滤ai说话时麦克风输入，句子结束后触发llm推理生成文本回复，利用统一千问的音频合成tts模型生成音频并推送至前端，并实时显示字幕。\n\n### 结构化输出\n\n简历评分要返回评分项和建议列表，出题要返回 JSON 格式的题目数组，评估要返回每题得分和总结。\n\n传入系统提示词和用户提示词并通过提供的JSON提示词模板约束生成内容，调用LLM生成解析失败后会返回错误原因并重新生成解析，保证最后输出返回正确json。\n\n如果还是生成失败达到最大重试次数就抛出异常。\n\n### Client缓存\n\nChatClient 的初始化涉及网络配置、序列化器注册等开销\n\n通过缓存，确保同一个 Provider 在整个应用生命周期内只初始化一次，提高性能\n\n线程安全：创建Client时如多个用户同时进行面试时系统内部会初始化一个底层的 HTTP 连接池，共用一个ChatClient实例**并发**发送到Provider服务器，保持低内存占用和高响应速度。\n\n### Client分化\n\n配置隔离：针对不同场景（聊天对话、简历评分、语音面试）在配置文件中设计不同调用路径，防止不同任务解析崩溃。\n\n### 多Provider\n\n通过一个统一的注册类缓存并路由不同厂商的模型，每个模型包含url、api-key、model、embedding model等配置。切换到某个模型时底层配置会第一次访问创建，后续复用。并且同一个厂商的模型针对不同应用场景调用不同的聊天客户端，每个聊天客户端使用工具情况不同，也是第一次访问创建，后续复用。\n\n### 历史去重\n\n按照类别汇总历史题目和已考知识点，避开已考方向，而不是根据字符串去重\n\n并将问答原文根据题目类别提取知识点摘要，防止历史prompt过长\n\n### 面试时缓存键设计\n\n面试过程中的数据（题目列表、进度等）实时存入Redis，方便快速切换\n\n不定时缓慢存入SQL防止中途关闭系统，且",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-6",
+          "index": 6,
+          "text": "创建，后续复用。\n\n### 历史去重\n\n按照类别汇总历史题目和已考知识点，避开已考方向，而不是根据字符串去重\n\n并将问答原文根据题目类别提取知识点摘要，防止历史prompt过长\n\n### 面试时缓存键设计\n\n面试过程中的数据（题目列表、进度等）实时存入Redis，方便快速切换\n\n不定时缓慢存入SQL防止中途关闭系统，且面试结束时统一提交SQL\n\n面试完成后及时清理完成状态，方便用户开启新一轮面试\n\n### 生成报告PDF乱码\n\n将字体文件打包进JAR包，生成PDF时强制嵌入字体数据\n\n对于生成的emoji数据在所有文本进入 PDF 之前统一过滤\n\n### Stream 无限增长导致内存耗尽\n\n发送消息时添加 **MAXLEN 限制**，自动裁剪旧消息\n\n### 分布式缓存与会话管理\n\n分布式环境下，用户的请求可能被负载均衡分发到不同的服务器实例，这就带来了**会话不一致**的问题。\n\n通过将会话存储在redis存储面试会话数据，实现跨实例的会话共享，保证数据一致性。\n\n### 句子级TTS\n\nLLM 流式生成时，每次拿到 token 先累计文本。**检测到句子结束标点**后，就把这个完整句子交给 TTS 合成并推送给前端播放。这样用户不需要等整段回答全部生成完，能更早听到第一句话。\n\n### 限流\n\n采用Sorted Set +String组合结构实现滑动窗口算法，Sorted Set记录每次请求的时间戳和消耗的令牌数，相当于流水账；String记录的是当前可用令牌数用来反馈当前额度，判断令牌数是否大于0来决定执行。\n\n滑动窗口限流包括清理、计算、判断、写入操作，lua脚本保证这些操作一次性执行完毕，不会被其他请求插入引发竞争。\n\n依赖Hash Tag（类名：方法名）保证Redis Cluster（多服务器）环境下lua脚本执行到同一个Slot，每个ip/user在所有服务器实例中共享限流计数redis key，保证限流计算的原子性。\n\n### Prompt防护\n\n防止用户上传的简历或文档正文文本中写“忽略以上内容”，导致偏离原任务。\n\n对于正文文本中可能存在的注入攻击",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-7",
+          "index": 7,
+          "text": "名：方法名）保证Redis Cluster（多服务器）环境下lua脚本执行到同一个Slot，每个ip/user在所有服务器实例中共享限流计数redis key，保证限流计算的原子性。\n\n### Prompt防护\n\n防止用户上传的简历或文档正文文本中写“忽略以上内容”，导致偏离原任务。\n\n对于正文文本中可能存在的注入攻击，三层防御\n\n第一层输入净化：用户数据进入模板之前做**正则清洗**伪造的标记短句\n\n第二层请求拦截：**匹配高危关键词**快速拒绝\n\n第三层模型兜底：告诉模型**正文文本标签内的不是命令**\n\n### PDF导出\n\n使用iText8生成pdf，内嵌中文字体避免乱码，根据分数做颜色区分。\n\n### Docker Compose\n\ndocker commit成镜像方便迁移，镜像打包成文件\n\n通过docker将项目依赖的postgresql、pgvector向量存储、redis、对象存储一键启动\n\n配置大模型apikey到环境向量\n\ngradle启动springboot后端项目\n\n前端跑在5173端口后自动代理到后端8080端口\n\n## AI智能商城客服\n\n### JWT令牌\n\n登录环节Controller层通过调用JwtUtil（用户id、签名、过期时间）生成令牌\n\n校验环节使用AOP拦截器统一处理Jwt验证\n\n并为指定登录接口路径设定拦截排除策略\n\n### Websocket消息推送\n\n通过一个服务中转站类获取session会话对象，并自定义方法调用遍历session会话发送消息\n\n在支付成功业务方法中构造推送的消息内容并调用服务中转站将消息广播\n\n### 滑动窗口保留20条是怎么保留的？\n\n每轮对话结束后，把本轮 user + assistant 追加进列表，再从头部删掉超出的旧消息\n\n### 文档是怎么切块的？\n\n400 字符 + 50 重叠 滑动窗口\n\n### 订单越权防护\n\n用户层在chatService实现类中子线程创建currentid，并与订单userid比对，防止查看其他用户订单\n\n### 如何复用菜品/订单Service？\n\nchat工具",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-8",
+          "index": 8,
+          "text": "ant 追加进列表，再从头部删掉超出的旧消息\n\n### 文档是怎么切块的？\n\n400 字符 + 50 重叠 滑动窗口\n\n### 订单越权防护\n\n用户层在chatService实现类中子线程创建currentid，并与订单userid比对，防止查看其他用户订单\n\n### 如何复用菜品/订单Service？\n\nchat工具（商品查询工具、商品名称、种类、描述匹配工具、用户订单分页查询工具、校验归属工具、订单状态处理工具）中直接注入现有service，工具返回统一为json字符串作为content内容，再返回给llm用自然语言处理后返回给前端。\n\n## java八股\n\n### final关键字\n\n修饰类不能被继承，修饰方法不能被重写，修饰变量只能被赋值一次\n\n### state关键字\n\n静态方法：只能通过类名调用，只能访问静态成员，不能使用this、super关键字，不能被继承\n\n静态变量：存储在方法区，其具有记忆功能，只初始化一次，随类加载和销毁\n\n### protect、public、private\n\npublic：同包，不同包父子类\n\nprotect：同包所有类，不同包的子类（继承来的成员）\n\nprivate：只供本类访问\n\ndefault：同包父子类\n\n### 重载与重写\n\n重载：同一个类中，方法名相同，参数列表（个数、类型、顺序）不同。\n\n重写：子类对父类中非私有、非 static、非 final的方法进行重新实现。\n\n### 抽象类与接口\n\n抽象类：**单继承**，只能 extends 一个；**有构造方法**，可初始化；普通变量、常量都能写；侧重共性代码\n\n抽象类不能被实例化，可以包含必须被子类实现的抽象方法\n\n接口：**多实现**，可 implements 多个；**无构造方法**； 成员变量只能是 final 常量；侧重行为规范\n\n### ==与equals()\n\n==：基本数据类型比较数值，包装数据类型比较地址\n\nequals()：默认与==一样，重写后比较包装数据类型对象内容\n\n### 集合\n\n#### Arrylist和Linklist区别\n\nArra",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-9",
+          "index": 9,
+          "text": "ments 多个；**无构造方法**； 成员变量只能是 final 常量；侧重行为规范\n\n### ==与equals()\n\n==：基本数据类型比较数值，包装数据类型比较地址\n\nequals()：默认与==一样，重写后比较包装数据类型对象内容\n\n### 集合\n\n#### Arrylist和Linklist区别\n\nArrayList：动态数组，随机访问查询快，内存少\n\nLinklist：双向链表，增删快，内存大\n\n#### HashSet和HashMap区别\n\nHashMap存储键值对，键不能重复\n\nHashSet只存储对象，底层是基于HashMap实现，值不能重复\n\n#### HashMap长度和Arrylist长度\n\nArrylist：实际元素数量\n\nHashMap: 16×0.75×2\n\n#### HashMap底层实现\n\n内部是一个数组，每一个数组元素是一个键值对，每一个数组元素又是一个链表（节点小于6）或红黑树（链表大于8，数组大于64），每个链表或红黑树存储一个键值对\n\n#### TreeMap\n\n底层是红黑树，节点按照键的自定义顺序排序或自定义排序，插入或查找时有序，适合范围查询。\n\n#### HashMap死循环\n\n多线程下线程挂起导致头插法可能导致环形链表，jdk1.8后红黑树可以解决\n\n#### 哈希冲突\n\n两个不同元素的hashcode相同\n\n链地址法：插入链表末尾\n\n开放定址法：先哈希，再二次探测遍历或采用某种计算方式线性探测\n\n再哈希法：采用其他哈希函数\n\n#### CurrentHashmap和HashTable\n\njdk1.7：数组分为大数组Segment和小数组HashEntry,通过给大数组加锁（分段锁）实现线程安全\n\njdk1.8：使用数组+链表/红黑树，通过给数组加锁CAS/synchronized实现线程安全，粒度更小\n\nHashTable：锁整个Map，线程安全\n\n### 包装数据类型\n\n使用在泛型和集合框架中，默认为null，将基本数据类型转换为对象使得能够**使用对象的方法和属性**。\n\n```java\nList<Integer",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-10",
+          "index": 10,
+          "text": "1.8：使用数组+链表/红黑树，通过给数组加锁CAS/synchronized实现线程安全，粒度更小\n\nHashTable：锁整个Map，线程安全\n\n### 包装数据类型\n\n使用在泛型和集合框架中，默认为null，将基本数据类型转换为对象使得能够**使用对象的方法和属性**。\n\n```java\nList<Integer> integerList = new ArrayList<>();\nintegerList.add(100); // 自动装箱\nintegerList.add(200);\nint first = integerList.get(0); // 自动拆箱\n```\n\n### 自动装箱/拆箱\n\n装箱：编译器自动将基本数据类型——>包装数据类型\n\n拆箱：编译器自动将包装数据类型——>基本数据类型\n\n### String、Stringbuffer、Stringbuilder\n\nstring被final修饰定义后不可变\n\nstringbuilder利用append方法进行字符串拼接\n\nstringbuffer在stringbuilder基础上加上内置锁保证线程安全。\n\n### 重写重载\n\n重载针对同一个类中创建多个方法但参数列表不同，重写时子类覆盖父类方法，参数列表相同。\n\n### 深拷贝与浅拷贝\n\n浅拷贝在堆上创建一个新对象，如果原始对象内部有引用类型，浅拷贝会复制对象内部以引用类型地址，而深拷贝不会复制这个地址。\n\n### 内部类\n\n成员内部类：定义在成员位置，需要**外部类实例创建**，可以访问外部类所有成员，但内部不能定义静态成员。与外部类强关联的组件\n\n静态内部类：用static修饰，**不需要外部类实例**，只能访问外部类的静态成员，使用最广泛。常用于 Builder 模式。\n\n局部内部类：定义在方法内部，**作用域仅限于该方法**，只能访问方法的 final 或 effectively final 变量。复杂逻辑封装在方法中。\n\n匿名内部类：没有类名的局部内部类，通常用于**一次性实现接口或继承父类**，JDK 8 后可以用 Lambda 简化。事件监听",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-11",
+          "index": 11,
+          "text": "泛。常用于 Builder 模式。\n\n局部内部类：定义在方法内部，**作用域仅限于该方法**，只能访问方法的 final 或 effectively final 变量。复杂逻辑封装在方法中。\n\n匿名内部类：没有类名的局部内部类，通常用于**一次性实现接口或继承父类**，JDK 8 后可以用 Lambda 简化。事件监听、临时回调。\n\n### 反射\n\n 运行时动态获取类的信息，用于SpringIOC、AOP\n\n```java\nClass<?> clazz = Class.forName(\"com.example.User\"); // 1. 获取Class\nObject obj = clazz.getDeclaredConstructor().newInstance(); // 2. 创建实例\nField field = clazz.getDeclaredField(\"name\"); // 3. 获取字段\nfield.setAccessible(true); // 4. 暴力访问\nfield.set(obj, \"newValue\"); // 5. 设置值\n\nMethod method = clazz.getDeclaredMethod(\"methodName\", paramTypes);\nmethod.invoke(obj, args);\n```\n\n### 泛型\n\n泛型可以保证**类型安全**。通过使用泛型，我们可以在编译阶段就捕获类型错误。\n\n泛型可以提高**代码复用性**。以集合类为例，我们可以定义一个泛型类，使其适用于不同类型的数据。\n\n### 设计模式\n\n**单例模式**：Spring Bean 默认是单例的，通过容器保证全局唯一。\n\n**工厂模式**：`BeanFactory` / `ApplicationContext` 作为工厂，负责创建和管理 Bean。\n\n**代理模式**：AOP 基于动态代理实现（JDK 动态代理 / CGLIB 代理）。\n\n**模板方法模式**：如 `JdbcTemplate` / `RedisTemplate`，定义算法骨架，具体步骤",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-12",
+          "index": 12,
+          "text": "：`BeanFactory` / `ApplicationContext` 作为工厂，负责创建和管理 Bean。\n\n**代理模式**：AOP 基于动态代理实现（JDK 动态代理 / CGLIB 代理）。\n\n**模板方法模式**：如 `JdbcTemplate` / `RedisTemplate`，定义算法骨架，具体步骤由子类实现。\n\n**观察者模式**：Spring 事件驱动模型（`ApplicationEvent` / `ApplicationListener`）。\n\n**策略模式**：资源加载、事务管理中，根据不同场景选择不同的实现策略。\n\n**适配器模式**：AOP 中对不同通知类型的适配，以及 Spring MVC 中 `HandlerAdapter`。\n\n### Java 21 虚拟线程\n\n线程池偏向CPU密集型应用场景，偏向数据计算、图像处理；\n\n虚拟线程偏向网络IO密集型应用场景，偏向大量网络请求需要等待网络和第三方服务返回（http、文件i/o）。\n\n### spirng\n\nIOC：把对象的创建、管理权交给 Spring 外部容器，不用自己 new 对象了。 @Service @Restcontroller @Mapper交给Spring管理，通过@Autowired自动依赖注入/DI\n\nAOP：不修改原有代码，给方法统一添加额外功能。通过@Aspect设定切面类，限定需要增强的方法（日志、事务、权限）\n\n#### 循环依赖\n\nspringboot2.6之后不再出现\n\n两个bean互相注入\n\n创建A（携带内存地址），填充A时需要注入B，则需要创建B，A先放在三级缓存\n\n创建B（携带内存地址），填充B时需要注入A，从三级缓存中拿A（内存地址），B注入完成\n\n回到A中填充B，A注入完成\n\n#### 常用注解\n\nBean 定义与注入\n\n- `@Component` / `@Service` / `@Controller` / `@Repository`：将类声明为 Spring Bean\n- `@Autowired`：按类型自动注入依赖（可配合`@Qualif",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-13",
+          "index": 13,
+          "text": "，B注入完成\n\n回到A中填充B，A注入完成\n\n#### 常用注解\n\nBean 定义与注入\n\n- `@Component` / `@Service` / `@Controller` / `@Repository`：将类声明为 Spring Bean\n- `@Autowired`：按类型自动注入依赖（可配合`@Qualifier`按名称指定）\n- `@Resource`：按名称注入依赖（JDK 注解，Spring 支持）\n- `@Value`：注入配置文件中的值（如 `@Value(\"${config.key}\")`）\n\n配置相关\n\n- `@Configuration`：声明配置类，替代 XML\n- `@Bean`：在配置类中定义 Bean\n- `@ComponentScan`：指定扫描 Bean 的包路径\n- `@PropertySource`：加载外部配置文件\n\nAOP 相关\n\n- `@Aspect`：声明切面类\n- `@Before` / `@After` / `@Around` / `@AfterReturning` / `@AfterThrowing`：定义通知类型\n- `@Pointcut`：定义切入点表达式\n\n事务相关\n\n- `@Transactional`：声明事务（可配置隔离级别、传播行为、超时等）\n\n#### @Transactional\n\n在service层使用，保证一组数据库操作要么全部成功，要么全部失败回滚事务\n\n#### bean作用域\n\n默认单例bean：1个实例 servece、mapper bean安全\n\n原型bean：每次获取创建新实例 购物车 \n\nrequest：每个http请求一个实例 http请求封装\n\nsession：每个http session一个实例 用户登录信息\n\n**只要Bean中有可变的成员变量，并且这个变量会被多个线程修改，就是不安全的。**\n\n#### Spring Boot 4.0\n\n简化后端服务之间的调用，不用手写HTTP调用的实现类，只用写接口\n\n支持Redis静态主从，主库挂掉需要人工配置备用库\n\n####",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-14",
+          "index": 14,
+          "text": "：每个http session一个实例 用户登录信息\n\n**只要Bean中有可变的成员变量，并且这个变量会被多个线程修改，就是不安全的。**\n\n#### Spring Boot 4.0\n\n简化后端服务之间的调用，不用手写HTTP调用的实现类，只用写接口\n\n支持Redis静态主从，主库挂掉需要人工配置备用库\n\n#### Spring AI 2.0\n\n要求Java21、Spring Framework7.0、Spring Boot4.0\n\n统一API，claude4.5、gpt-5模型集成，只需要更改配置，方便模型切换\n\nredis支持RAG向量检索，新增语义缓存，针对相似问题直接返回缓存结果\n\n### Mybatis\n\n#{}: 预编译处理，Mybatis 会将其替换为？占位符，使用 PreparedStatement 的方法单独赋值，能自动加入单引号，能有效防止 SQL 注入。\n\n${}: 字符串拼接，将{}中替换为变量的值，不自动加单引号，不能防止SQL注入，只能用于动态传入表名、列名、like模糊查询的场景。\n\n### 并发\n\n#### 进程与线程\n\n进程：正在运行的一个JVM程序实例，资源分配的最小单位，拥有独立内存空间和资源\n\n线程：进程中的一个执行单元，包含在进程之内，JVM进程启动时会创建多个内部线程，CPU调度分配的基本单位，共享JVM进程的堆、方法区、内存，拥有各自独立的程序计数器、栈\n\n#### 创建线程\n\n继承Thread类：资源消耗，高适合简单任务\n\nRunnable接口：不支持返回值，不可抛异常\n\nCallable接口：可以接收返回值，可以抛异常\n\n线程池：可以接收返回值，可以抛异常，适合高并发\n\n#### 线程池原理\n\n预先创建一组线程，重复使用它们来执行多个任务，避免频繁创建和销毁线程的开销。\n\n#### 线程状态\n\n初始：创建出来没有start()\n\n运行：调用了start()\n\n阻塞：需要等待锁释放\n\n等待：线程需要等待其他线程做一些特定动作\n\n超时等待：可以在指定的时间后自行返回而不用一直等待\n\n终止：线程执行完毕\n\n#### Thre",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-15",
+          "index": 15,
+          "text": "组线程，重复使用它们来执行多个任务，避免频繁创建和销毁线程的开销。\n\n#### 线程状态\n\n初始：创建出来没有start()\n\n运行：调用了start()\n\n阻塞：需要等待锁释放\n\n等待：线程需要等待其他线程做一些特定动作\n\n超时等待：可以在指定的时间后自行返回而不用一直等待\n\n终止：线程执行完毕\n\n#### ThreadLocal 底层原理\n\n每个线程在其Thread对象都维护一个ThreadLocalMap，以 ThreadLocal对象为key（弱引用）、存储的值为value（强引用），从而实现线程间的数据隔离。\n\n内存泄漏：ThreadLocal对象被回收时，value还在里面；主动调用remove()避免\n\n#### 线程池与虚拟线程\n\n针对java任务中需要频繁执行任务，频繁创建线程，创建线程池复用线程，不用频繁创建销毁。\n\n针对io高延迟任务，启用虚拟线程，io阻塞时，jvm将虚拟线程栈保存到堆中，等待io任务完成，释放真实载体线程，io就绪后，从堆中恢复栈，分配到其他载体线程继续执行。\n\n#### 线程池常见参数\n\n**corePoolSize（核心线程数）**：线程池长期维持的线程数，即使空闲也不会被回收。\n\n**maximumPoolSize（最大线程数）**：线程池能容纳的最大线程数。\n\n**keepAliveTime（空闲时间）**：非核心线程空闲超过该时间会被回收。\n\n**unit（时间单位）**：`keepAliveTime`的单位。\n\n**workQueue（工作队列）**：存放等待执行任务的阻塞队列（如`ArrayBlockingQueue`）。\n\n**threadFactory（线程工厂）**：创建线程的工厂，可自定义线程名、优先级等。\n\n**handler（拒绝策略）**：当任务队列和线程池都满时的处理策略。\n\n#### 线程池拒绝策略\n\n**AbortPolicy（默认）**：直接抛出RejectedExecutionException异常。\n\n**CallerRunsPolicy**：由提交任务的线程自己执行该任务。\n\n**Dis",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-16",
+          "index": 16,
+          "text": "名、优先级等。\n\n**handler（拒绝策略）**：当任务队列和线程池都满时的处理策略。\n\n#### 线程池拒绝策略\n\n**AbortPolicy（默认）**：直接抛出RejectedExecutionException异常。\n\n**CallerRunsPolicy**：由提交任务的线程自己执行该任务。\n\n**DiscardPolicy**：直接丢弃任务，不抛出异常。\n\n**DiscardOldestPolicy**：丢弃队列中最旧的任务，然后尝试提交当前任务。\n\n#### future类\n\n异步计算的结果占位符，用于获取线程池提交任务后的返回结果。\n\n#### 进程通信方式\n\n管道 / 匿名管道：半双工通信，父子进程间使用。\n\n命名管道 (FIFO)：支持无亲缘关系进程通信。\n\n消息队列：消息按队列传递，支持多进程读写。\n\n共享内存：多个进程映射同一块内存区域，效率最高。\n\n信号量：用于进程同步和互斥，控制资源访问。\n\n信号：异步通知进程发生了某个事件。\n\nSocket：跨网络的进程间通信，支持不同主机。\n\n#### 死锁\n\n两个或以上运算单元互相持有对方需要的资源，导致都无法前进。\n\n**条件**\n\n互斥：一个人只能有一个\n\n请求和保持：自己已经有，又想要其他的，自己又不放\n\n不可剥夺：自己的在未使用完之前不能被剥夺\n\n环路等待：我等你的，你等我的\n\n**解决**\n\n 顺序加锁：所有线程按照同一顺序获取锁，避免死锁\n\n设置超时时间： 规定时间没有获取到锁就放弃获取锁\n\n#### 悲观锁（synchronized/ReetrantLock）\n\n每次操作都加锁，能避免数据竞争，容易导致线程阻塞和死锁。\n\n适合写频繁\n\n#### 乐观锁（AtomicInteger/LongAdder-CAS）\n\n每次访问无需加锁，只需提交时验证是否被其他线程修改，被修改则通知调用者重试\n\n适合读频繁\n\n#### CAS\n\n用一个预期值和要更新的变量值比较，相等（没有其他线程更新）才更新\n\n#### ABA问题\n\nA->B->A，CAS检查不出来，通过在变量前加上版本号或时间戳。\n\n##",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-17",
+          "index": 17,
+          "text": "eger/LongAdder-CAS）\n\n每次访问无需加锁，只需提交时验证是否被其他线程修改，被修改则通知调用者重试\n\n适合读频繁\n\n#### CAS\n\n用一个预期值和要更新的变量值比较，相等（没有其他线程更新）才更新\n\n#### ABA问题\n\nA->B->A，CAS检查不出来，通过在变量前加上版本号或时间戳。\n\n### JVM\n\n#### 内存结构\n\n程序计数器：记录当前**线程执行位置**，线程私有，是唯一没有内存溢出的区域。\n\n虚拟机栈：存储栈帧（局部变量表、操作数栈、动态链接、方法出口），线程私有，**方法**调用时入栈，执行完出栈。\n\n本地方法栈：为 JVM 调用的本地**方法**服务，线程私有。\n\n堆：存放所有**对象实例和数组**，线程共享，垃圾回收的主要区域。\n\n方法区：存储已被加载的**类信息、常量、静态变量**、即时编译器编译后的代码缓存，线程共享（JDK8 后用元空间实现，直接使用本地内存）。\n\n#### 堆空间基本结构\n\n新生代（Young Generation）\n\n- **Eden 区**：新对象首先分配的区域，占新生代的 8/10。\n- **Survivor 区（S0/S1）**：两个大小相等的区域，占新生代各 1/10，对象在 Eden 区存活后会被复制到 Survivor 区，在两个区之间来回复制，直到年龄达到阈值进入老年代。\n\n老年代（Old Generation）\n\n存放长期存活的对象（如 Survivor 区多次复制仍存活的对象）、大对象（直接分配到老年代）。\n\n- 比例：新生代：老年代默认 1:2；Eden:S0:S1 默认 8:1:1。\n\n#### 垃圾收集算法\n\n**标记 - 清除算法**：\n\n- 原理：先标记所有需要回收的对象，标记完成后统一清除。\n\n**复制算法**：\n\n- 原理：将内存分为两块，每次只使用一块，GC 时将存活对象复制到另一块，然后清空当前块。\n\n**标记 - 整理算法**：\n\n- 原理：标记存活对象后，将所有存活对象向一端移动，然后清除边界外的区域。\n\n**分代收集算法**：\n\n- 原理：根据对象存活周期",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-18",
+          "index": 18,
+          "text": "有需要回收的对象，标记完成后统一清除。\n\n**复制算法**：\n\n- 原理：将内存分为两块，每次只使用一块，GC 时将存活对象复制到另一块，然后清空当前块。\n\n**标记 - 整理算法**：\n\n- 原理：标记存活对象后，将所有存活对象向一端移动，然后清除边界外的区域。\n\n**分代收集算法**：\n\n- 原理：根据对象存活周期不同，将堆分为新生代和老年代，不同区域使用不同算法。\n\n#### 双亲委派模型\n\n类加载器收到类加载请求时，先将请求委托给父类加载器处理，只有父类加载器无法加载时，才由自己加载。保证 Java 核心类库的安全\n\n## AI八股\n\n### MCP协议/Function Calling机制 \n\nMCP：MCP Client调用工具库(MCP Server)中的函数并返回函数执行结果。\n\nFunction Calling：LLM可以发现工具、选择工具、解析MCP Client服务器中工具执行的结果。\n\n1. 用户先提问问题，问题交给MCP Client\n\n2. MCP Client依据MCP协议获取MCP Server中的所有工具（name、describe等）\n\n3. MCP Client将工具列表转换为LLM可以理解的Function Calling格式+问题一并发给LLM\n\n4. LLM根据Function Calling机制选择针对问题合适的工具（结构化工具调用请求）后告诉MCP Client需要的工具/不用工具直接回答\n5. MCP Client根据LLM选择的工具依据MCP协议调用MCP Server中对应的工具函数\n6. MCP Server中的对应工具函数执行后依据MCP协议返回结果给MCP Client\n7. MCP Client返回工具执行后的文本给LLM\n8. LLM头脑风暴解析返回的Function Calling格式结果，并将解析后的结果生成自然语言回答，返回给MCP Client\n9. MCP Client将结果展示给用户。\n\n![c26255deedfd700637e9fd50d11168fc](D:\\Users\\小小凡\\xwech",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-19",
+          "index": 19,
+          "text": "返回工具执行后的文本给LLM\n8. LLM头脑风暴解析返回的Function Calling格式结果，并将解析后的结果生成自然语言回答，返回给MCP Client\n9. MCP Client将结果展示给用户。\n\n![c26255deedfd700637e9fd50d11168fc](D:\\Users\\小小凡\\xwechat_files\\wxid_lpx4zjxxvoum22_6a8e\\temp\\RWTemp\\2026-06\\9e20f478899dc29eb19741386f9343c8\\c26255deedfd700637e9fd50d11168fc.png)\n\n### AI面试馆Demo\n\n1. MCPServer类：def注册工具、def获取工具列表、def执行工具并返回\n2. 工具函数：def分析简历、def生成问题、def评估回答\n3. 实例化MCPServer类server，执行注册工具\n4. MCPClient类：def缓存工具列表、def调用工具并解析工具执行结果\n5. 实例化MCPClient类，传入server，调用工具并解析工具执行结果类并传入产生的问题提问\n\n### RAG\n\n将原始文档进行去噪处理后根据语义进行分块拆分并保留重叠区域，通过向量嵌入模型将文本映射为高维向量表示存储到向量数据库pgvector。\n\n用户查询时将接收到的查询问题**重写**后利用向量嵌入模型转为查询向量，与数据库中的向量相似度匹配，返回高相似度向量块对应的文档块，并与原始查询利用LLM共同构建组成最终答案。\n\n#### 文档元数据\n\n在文档分块时为每一条向量数据注入唯一标签\n\n检索时首先进行元数据标签匹配过滤不符合标签的记录，再利用向量匹配候选集合精确返回topk\n\n#### 向量数据库存储策略\n\n采用基于 Token 的切分策略。相比字符切分，Token 切分更能贴合大模型的上下文窗口限制，并设置重叠区以防止语义在切分处断裂。\n\n一份知识库切分后由于阿里云 DashScope 的 Embedding 接口对单次请求的文本数量有严格限制（最多 10 条），采用分批处理",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-20",
+          "index": 20,
+          "text": "回topk\n\n#### 向量数据库存储策略\n\n采用基于 Token 的切分策略。相比字符切分，Token 切分更能贴合大模型的上下文窗口限制，并设置重叠区以防止语义在切分处断裂。\n\n一份知识库切分后由于阿里云 DashScope 的 Embedding 接口对单次请求的文本数量有严格限制（最多 10 条），采用分批处理。\n\n#### 删除知识库\n\n1️⃣ 解除 RAG 会话关联（避免外键约束）\n\n2️⃣ 删除向量数据（pgvector中1024维用于相似度搜索的数字数组向量） \n\n3️⃣ 删除对象存储文件（MinIO/RustFS中存储的PDF、Word等原始文件）\n\n4️⃣ 删除数据库记录（PostgreSQL中文件元数据）\n\n#### Embedding\n\nEmbedding 模型把文本映射到高维向量空间（1024维），使得“语义相近”的文本向量距离更近。\n\n距离度量：余弦相似度\n\nEmbedding漂移：供应商模型升级、供应商切换、改变分块策略\n\n### Spring AI Langchain4j Langchain区别\n\n<img src=\"C:\\Users\\50273\\AppData\\Roaming\\Typora\\typora-user-images\\image-20260520175541980.png\" alt=\"image-20260520175541980\" style=\"zoom: 67%;\" />\n\n**Spring AI**：注入依赖、配置LLMapi、注入ChatModel、构造并使用Prompt模板、接口调用\n\n### call() 和 stream() 的区别是什么？\n\ncall是同步阻塞调用，等待llm完整相应后一次性返回，适用面试评分\n\nstream是流式响应，AI 生成一个 token 就推送一个，适用于问答对话场景。\n\n### Prompt\n\n提示词：给模型下达的指令**（角色（Role）、任务（Task）、上下文（Context）和输出格式（Format））**，fewshot示例驱动\n\n提示词工程：如何高效地与大模型沟通，以激发",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-21",
+          "index": 21,
+          "text": "适用面试评分\n\nstream是流式响应，AI 生成一个 token 就推送一个，适用于问答对话场景。\n\n### Prompt\n\n提示词：给模型下达的指令**（角色（Role）、任务（Task）、上下文（Context）和输出格式（Format））**，fewshot示例驱动\n\n提示词工程：如何高效地与大模型沟通，以激发它解决特定问题的最大潜力。\n\nsystem prompt 定义角色和全局规则（Role + Task + Format），user prompt 提供具体上下文和输入数据（Context）\n\n### 上下文窗口\n\n模型在任何时刻可以处理或“记住”的文本量【System Prompt、User Prompt、历史消息、输出预留、安全边际（工具调用包装、隐藏token、编码差异等）】（以 Token 为单位）\n\n### Few-Shot Learning\n\n对于一些复杂或格式要求严格的任务，提供 1-3 个示例，让模型理解输入和输出的期望模式。\n\n### 结构化输出\n\nSring AI提供的BeanOutputConverter\n\nJSON Schema约束：提示词模板中声明约束（会失败）\n\nStructured Outputs：自动重试、人工接入容错设计\n\n### SEE\n\n基于Spring webFlux响应式框架的HTTP服务器推送技术，采用SSE标准输出格式，允许**服务器向客户端单向发送**文本事件流，适用AI文本流式输出\n\n流式响应中的错误处理——由于HTTP 200状态码已发送，无法返回传统错误JSON，因此采用**响应式钩子**捕获异常，保存已生成的部分内容，同时向前端发送SSE格式的错误提示，实现降级并记录日志，从而保证前端UI状态正确、用户体验平滑。\n\n### Agent Skill\n\n可激活能力的封装\n\n**SKILL.md**元数据\n\nname（必须）：工具名\n\ndescripiton（必须）：工具简要描述\n\nscript：存放脚本代码\n\nreferences：参考文档\n\nassets：存放模板、配置文件、静态资源\n\n初始阶段加载所有S",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-22",
+          "index": 22,
+          "text": "状态正确、用户体验平滑。\n\n### Agent Skill\n\n可激活能力的封装\n\n**SKILL.md**元数据\n\nname（必须）：工具名\n\ndescripiton（必须）：工具简要描述\n\nscript：存放脚本代码\n\nreferences：参考文档\n\nassets：存放模板、配置文件、静态资源\n\n初始阶段加载所有SKILL的name、description，基于用户问题按需加载完整SKILL，加载SKILL内部全部工具，且加载后后续遇到相似问题可以直接使用不用重复激活。\n\n### Advisor链\n\nLLM 调用链上的 \"拦截器\"（类似 Spring AOP 切面），可在 LLM 调用前后执行日志记录、内容过滤、能力注入等操作\n\n## SQL/对象存储\n\n### 事务并发问题\n\n脏读：（读到未提交的数据）A读取了B未提交事务修改的数据，可能不存在\n\n不可重复读：（同一数据变化）B在A多次读取的过程中，对数据作了**更新**并提交，导致A多次读取同一数据时结果不一致\n\n幻读：（结果集行数变化）A两次执行相同的查询之间，B执行**插入/删除**操作并提交，第二次返回的结果集多出了新记录或减少了记录\n\n### 隔离级别\n\n读未提交：出现三种问题\n\n读已提交：解决脏读\n\n可重复读（默认）：解决不可重复读，在MVCC下很大程度解决幻读\n\n序列化读：解决三种问题，无并发效率低下\n\n### 三大日志\n\n**Redo Log（重做日志）**\n\n- 作用：保证事务的**持久性**，记录事务对数据页的修改，宕机恢复时重做。\n\n**Undo Log（回滚日志）**\n\n- 作用：保证事务的**原子性**和 MVCC，记录修改前的数据，事务回滚时恢复数据。\n\n**Binlog（二进制日志）**\n\n- 作用：记录数据库的所有写操作，用于**主从复制**和数据恢复。\n\n### mvcc机制\n\nMVCC 是多版本并发控制，通过隐藏字段（DB_TRX_ID、DB_ROLL_PTR）、undo log 版本链和 Read View 实现。\n\n在可重复读级别下，事务第一次查询时生成 Read View",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-23",
+          "index": 23,
+          "text": "二进制日志）**\n\n- 作用：记录数据库的所有写操作，用于**主从复制**和数据恢复。\n\n### mvcc机制\n\nMVCC 是多版本并发控制，通过隐藏字段（DB_TRX_ID、DB_ROLL_PTR）、undo log 版本链和 Read View 实现。\n\n在可重复读级别下，事务第一次查询时生成 Read View 并复用，普通SELECT快照读可以读Read View数据保证多次查询结果相同\n\n无法解决**当前读**（select for update、delete等），需要记录之间加上**间隙锁**，防止其他事务在锁范围内插入新数据，解决幻读\n\nroll_poiner：指向undo log的指针\n\nundo log：记录历史操作，需要历史消息时通过反向操作将数据恢复到先前状态\n\nreadView：判断哪个版本对当前事务可见\n\ntrx_id：当前事务id，后续事务id递增\n\nm_ids：生成readView时**已经启动还未提交**的事务ID列表\n\nmin_trx_id：当前活跃id的最小值，当前事务id比它小说明已经提交，其他事务可见\n\nmax_trx_id：当生成readView时InnoDB将分配给下一个事务的ID值，当前事务id比他还大说明事务生成readView时该事务还**未启动**，其他事务不可见\n\n如果当前事务trx_id在最大和最小之间，如果trx_id在m_ids中，说明还未提交，其他事务不可见，否则可见。\n\n### PostgreSQL\n\n复杂查询、原生支持丰富高级类型（JSON、GIS、AI向量），兼容SQL\n\n### pgvector\n\nPostgreSQL 的开源向量扩展，让 PostgreSQL 原生支持高维向量存储、索引与相似度搜索，是 AI / 大模型应用的主流方案。\n\n### RusfFS\n\n基于Rust的开源的对象存储服务，可本地部署，类型（阿里云OSS、亚马逊AWS S3，MinIO），兼容AWS S3协议（对象存储通信标准，定义S3上传、下载等操作规范）。\n\n## Redis\n\n#### 数据结构\n\nString：字符串类型",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-24",
+          "index": 24,
+          "text": "与相似度搜索，是 AI / 大模型应用的主流方案。\n\n### RusfFS\n\n基于Rust的开源的对象存储服务，可本地部署，类型（阿里云OSS、亚马逊AWS S3，MinIO），兼容AWS S3协议（对象存储通信标准，定义S3上传、下载等操作规范）。\n\n## Redis\n\n#### 数据结构\n\nString：字符串类型——缓存、计数器\n\nList：列表类型——消息队列\n\nSet：无序集合类型——好友列表\n\nZSet：有序集合类型——排行榜\n\nHash：哈希表类型——用户信息缓存\n\n#### 生产问题\n\n##### 缓存击穿\n\n针对某个访问非常频繁的热点数据的**请求key，过期失效**无法在缓存中获取，紧接着，访问该数据的大量请求，一下子都发送到了后端数据库，导致了数据库压力激增，直接影响数据库无法处理其他请求。\n\n互斥锁：多个请求访问，**拿到锁才能访问数据库并更新缓存**，拿不到锁就阻塞等待。性能降低\n\n缓存过期：**缓存永不过期**，根据数据情况（疫情期间口罩、消毒水高并发）判断去维度过期时间。\n\n##### 缓存雪崩\n\n指的是大面积的 key 同时过期（大面积击穿），导致大量并发打到我们的数据库。\n\n**设定随机失效时间**\n\n**做好哨兵模式，这个key挂了另外一个补上**\n\n**机房挂掉切换另一个机房**\n\n##### 缓存穿透\n\n指要访问的数据既不在 Redis 缓存中，也不在数据库中。此时，应用也无法从数据库中读取数据再写入缓存，来服务后续请求，这样一来，缓存也就成了“摆设”，数据库压力过大。\n\n**参数校验拦截非法请求**\n\n**缓存空对象**，不管数据库是否查到都缓存进redis，并设置失效时间\n\n**布隆过滤器**，预先将过期的key放入布隆过滤器，后续请求先到达布隆过滤器，返回不存在就拦截，返回可能存在则继续查缓存。\n\n#### 统计网站UV（每天用户量）\n\n中小型网站使用set集合记录用户id并自动去重，用户量大则内存大\n\n大型网站使用Hyperloglog记录用户id经过算法运算后的统计学特征，固定12kb，但有误差\n\n#### 排行榜\n\n利",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-25",
+          "index": 25,
+          "text": "放入布隆过滤器，后续请求先到达布隆过滤器，返回不存在就拦截，返回可能存在则继续查缓存。\n\n#### 统计网站UV（每天用户量）\n\n中小型网站使用set集合记录用户id并自动去重，用户量大则内存大\n\n大型网站使用Hyperloglog记录用户id经过算法运算后的统计学特征，固定12kb，但有误差\n\n#### 排行榜\n\n利用sorted set/ZSet有序集合\n\n#### redis单线程\n\nredis大部分操作在内存中完成，并采用哈希表、跳表这样高效的数据结构，实现高性能\n\nredis采用多路复用机制，使其在网络io操作中能并发处理大量的客户端请求，实现高吞吐率\n\nredis6.0引入多线程\n\n#### redis内存管理\n\n通过过期字典为redis中的数据设置过期时间\n\n惰性删除：访问时发现过期就删除，没过期就返回\n\n定期删除：周期性主动扫描删除\n\n内存淘汰：内存满时利用8种内存淘汰机制释放内存\n\n##### 缓存数据量过大\n\n内存淘汰\n\nRedis Cluster数据分片，自动将数据分散到多个 Redis 节点，每个节点存一部分\n\n#### 内存淘汰机制\n\n**noeviction（默认）**：不淘汰，写操作直接报错（读操作正常）。\n\n**allkeys-lru**：**从所有键中，淘汰最近最少使用的键。**\n\n**volatile-lru**：**从设置了过期时间的键中，淘汰最近最少使用的键。**\n\n**allkeys-lfu**：从所有键中，淘汰访问频率最低的键。\n\n**volatile-lfu**：从设置了过期时间的键中，淘汰访问频率最低的键。\n\n**allkeys-random**：从所有键中随机淘汰。\n\n**volatile-random**：从设置了过期时间的键中随机淘汰。\n\n**volatile-ttl**：从设置了过期时间的键中，优先淘汰即将过期的键。\n\n#### 持久化机制\n\n快照：定期快照某个时间节点的副本——丢失最后一次快照之后的数据\n\n日志：保存每次的写命令，定期重写合并重复命令——日志过大，恢复慢\n\n两种结合（文件头定期快照、后面存放写命令",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-26",
+          "index": 26,
+          "text": "：从设置了过期时间的键中随机淘汰。\n\n**volatile-ttl**：从设置了过期时间的键中，优先淘汰即将过期的键。\n\n#### 持久化机制\n\n快照：定期快照某个时间节点的副本——丢失最后一次快照之后的数据\n\n日志：保存每次的写命令，定期重写合并重复命令——日志过大，恢复慢\n\n两种结合（文件头定期快照、后面存放写命令）redis4.0\n\n#### 哨兵机制\n\n实现 Redis 主从架构的**自动故障转移**，监控主节点状态，主节点宕机时自动选举新主节点。\n\n#### redis事务\n\nredis无原子性\n\nlua有原子性\n\n<img src=\"C:\\Users\\50273\\AppData\\Roaming\\Typora\\typora-user-images\\image-20260524115850688.png\" alt=\"image-20260524115850688\" style=\"zoom:66%;\" />\n\n#### Redission\n\n基于 Redis 的 Java 客户端框架，将java对象存入redis使得所有进程共享，使得像操作对象集合一样操作Redis\n\n分布式锁，业务执行多久就锁多久，避免死锁\n\n#### CurrentHashmap和redis\n\n<img src=\"C:\\Users\\50273\\AppData\\Roaming\\Typora\\typora-user-images\\image-20260521113308764.png\" alt=\"image-20260521113308764\" style=\"zoom:67%;\" />\n\n#### Redis Stream\n\n异步任务队列，解耦耗时的 AI 处理任务（简历分析、向量化、面试评估），让用户无需等待即可得到状态响应，后台慢慢处理，提升系统性能和用户体验。\n\n如果用PostSQL处理这些任务由于其单进程架构所有操作共享一套CPU、内存、磁盘IO资源，容易超载。\n\n#### Redission+Lua分布式限流\n\n利用@RateLimit注解在Controller层，通过AOP切面拦截注解",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-27",
+          "index": 27,
+          "text": "、面试评估），让用户无需等待即可得到状态响应，后台慢慢处理，提升系统性能和用户体验。\n\n如果用PostSQL处理这些任务由于其单进程架构所有操作共享一套CPU、内存、磁盘IO资源，容易超载。\n\n#### Redission+Lua分布式限流\n\n利用@RateLimit注解在Controller层，通过AOP切面拦截注解方法，利用**滑动窗口算法**精确控制时间窗口内请求数。\n\n针对未来需要部署到多个服务器的多实例项目，采用Redis分布式限流使得每个用户在所有服务器实例中共享限流计数redis key\n\nRedission内部方法将lua脚本上传到Redis服务器作为全局缓存对象被所有连接到这个Rediss的进行共享执行。\n\n使用lua脚本使得限流逻辑在redis中一次性执行（原子性），在高并发下不会被其他命令打断\n\n在访问流量过高时调用降级方法为用户返回提示。\n\n## 项目工具\n\n### Maven\n\n以XML固定声明周期，约定优先。冗长、重复多、声明式，结构固定易读但定制繁琐。\n\n```xml\n<!-- Maven 依赖示例 -->\n<dependency>\n <groupId>org.springframework</groupId>\n <artifactId>spring-core</artifactId>\n <version>5.3.20</version>\n</dependency>\n```\n\n### Gradle\n\nGroovy 或 Kotlin DSL，基于任务有向无环图，支持自定义任务与依赖链，兼容 Maven/Ivy 仓库，多语言生态（Java/Kotlin/Android/C++）。简洁、可编程、混合声明 / 命令式。\n\n```java\n// Gradle 依赖示例（Groovy）\nimplementation 'org.springframework:spring-core:5.3.20'\n```\n\n### Apache Tika\n\n解析多种格式（PDF、DOCX、DOC、TXT、HTML、Markdown）的文档；\n\n统一 API，自动识别跳过",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-28",
+          "index": 28,
+          "text": "a\n// Gradle 依赖示例（Groovy）\nimplementation 'org.springframework:spring-core:5.3.20'\n```\n\n### Apache Tika\n\n解析多种格式（PDF、DOCX、DOC、TXT、HTML、Markdown）的文档；\n\n统一 API，自动识别跳过文档嵌入元素（jpg，html）；\n\n内部装饰器提取文档正文<body>核心文本；\n\n读取二进制流头部字节（魔数）防止后缀篡改文件注入。\n\n### iText\n\n基于各种排版样式（标题、分节、表格、颜色、字体等）实现PDF导出\n\n# 面试记录\n\n## 郑州引力琥珀人工智能有限公司\n\n### Mysql中高并发读写遇到的问题\n\n![image-20260525193817337](C:\\Users\\50273\\AppData\\Roaming\\Typora\\typora-user-images\\image-20260525193817337.png)\n\n死锁：多个事务互相持有对方需要的锁，形成循环等待\n\n### MVCC原理\n\nMVCC 是多版本并发控制，通过隐藏字段（DB_TRX_ID、DB_ROLL_PTR）、undo log 版本链和 Read View 实现。在可重复读级别下，事务第一次查询时生成 Read View 并复用，从而实现非阻塞读和一致性视图，避免了不可重复读。\n\n### Jwt令牌如何发挥作用\n\n登录环节Controller层通过调用JwtUtil（用户id、签名、过期时间）生成令牌；校验环节使用AOP拦截器统一处理Jwt验证；并为指定登录接口路径设定拦截排除策略\n\n### Tika文档解析方式\n\n解析多种格式（PDF、DOCX、DOC、TXT、HTML、Markdown）的文档，内部装饰器提取文档正文<body>核心文本，自动识别跳过文档嵌入元素（jpg，html），将文档中多余的空白和干扰字符正则清除。读取二进制流头部字节防止后缀篡改文件注入。\n\n### 简历上传解析流程，为什么不用Websocket通信\n\n用户上传文件后通过去重预处",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-29",
+          "index": 29,
+          "text": "CX、DOC、TXT、HTML、Markdown）的文档，内部装饰器提取文档正文<body>核心文本，自动识别跳过文档嵌入元素（jpg，html），将文档中多余的空白和干扰字符正则清除。读取二进制流头部字节防止后缀篡改文件注入。\n\n### 简历上传解析流程，为什么不用Websocket通信\n\n用户上传文件后通过去重预处理后将元数据保存到数据库表中，并发送Redis Stream异步任务（针对每个异步任务设定不同消费者组，每个消费者组存在多个消费者），同时通过状态轮询将任务状态返回给前端。针对简历上传任务，解析解析文本并分块，为每个chunk添加元数据（知识库id）用于关联查询，调用嵌入模型生成向量，并存入向量表中，并更新任务状态。\n\n文件上传应该使用标准的HTTP（POST/GET/PUT/DELETE）方法，并且只用发送一次请求，Websocket适合实时双向通信，这里使用占用连接池资源容易造成资源浪费，并且复杂度过高。\n\n### RAG知识库向量化为什么采用1024维\n\n阿里云嵌入模型标准输出维度，在检索准确率和计算开销之间取得最佳平衡。\n\n### RAG如何根据id防止用户越权读到其他用户上传的知识库\n\n未实现\n\n在知识库实体中添加用户id字段，并修改实体类，在向量检索的service层添加用户权限校验，过滤不属于本用户上传的知识库向量。\n\n### 知识库/向量元数据存储信息\n\n知识库元数据包括id、name、用于去重的哈希值、分组、文件大小、上传时间、访问次数、向量化分块数量等信息\n\n向量元数据存储的只有隶属的知识库id\n\n### WebSocket原理\n\n首先websocket握手成功后建立连接与语音识别服务初始化，接收用户音频使用通义千问实时语音ASR模型识别并流式输出识别得文本，并自动过滤ai说话时麦克风输入，句子结束后触发llm推理生成文本回复，利用统一千问的音频合成tts模型生成音频并推送至前端，并实时显示字幕。\n\n### Dashscope使用到了哪些模型\n\nqwen3-max对话模型、text-embedding-v4向量化模型、Qwen3-ASR",
+          "source_name": "node.md"
+        },
+        {
+          "id": "fbf8e3e77cfa41e1b240ccd89f56d48e-30",
+          "index": 30,
+          "text": "音ASR模型识别并流式输出识别得文本，并自动过滤ai说话时麦克风输入，句子结束后触发llm推理生成文本回复，利用统一千问的音频合成tts模型生成音频并推送至前端，并实时显示字幕。\n\n### Dashscope使用到了哪些模型\n\nqwen3-max对话模型、text-embedding-v4向量化模型、Qwen3-ASR语音识别模型和Qwen3-TTS音频合成模型\n\n## 河南鑫安利安全科技股份有限公司\n\n### 给你一个项目做一个ai面试官，各个节点怎么设计？\n\n1.简历解析\n\n输入候选人简历\n\n用文档解析工具解析出文本内容\n\n输出结构化标签集，供出题节点使用\n\n2.动态出题\n\n输入候选人面试方向、面试轮次、历史回答记录\n\n将各方向题参考文档保存在md文件中，根据面试者的方向选择对应Skill，从Skill中获取面试官人设、出题题目优先级配置、题目参考文档\n\n对于语音面试，通过调用外部工具，扫面所有方向的Skill简介，工具按需加载对应方向的Skill中的全部信息\n\n3.语音采集\n\n利用ASR语音识别模型识别用户语音输入并转文本，将文本输送LLM，由LLM思考后利用TTS语音生成模型流式播报给前端\n\n4.评分\n\n异步对每道题进行单独打分，并汇总得到最终得分，并通过JSON Schema约束生成最终评价，交由前端格式化显示",
+          "source_name": "node.md"
+        }
+      ],
+      "database": {
+        "stored": true,
+        "chunk_count": 30,
+        "model": "text-embedding-v4"
+      }
+    }
+  ],
+  "conversations": []
+}
