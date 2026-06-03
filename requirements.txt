@@ -1,8 +1,0 @@
-openai
-langchain-core
-langchain-openai
-python-dotenv
-PyYAML
-psycopg[binary]
-oss2
-tika
