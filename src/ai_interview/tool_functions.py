@@ -2,7 +2,11 @@ from typing import Any, Dict, List
 
 from .llm import build_prompt, invoke_llm_json
 
+'''
+Skill.md-func脚本
+'''
 
+# 从JD中提取职位要求
 def extract_job_requirements(job_description: str) -> Dict[str, Any]:
     """Extract structured interview requirements from a job description."""
     text = job_description.strip()
@@ -33,6 +37,7 @@ def extract_job_requirements(job_description: str) -> Dict[str, Any]:
     }
 
 
+# 针对用户面试回答给出更好的回答版本、缺口和改进建议
 def improve_interview_answer(question: str, answer: str) -> Dict[str, Any]:
     """Suggest concise improvements for a candidate answer."""
     if not question.strip():
@@ -65,6 +70,7 @@ def improve_interview_answer(question: str, answer: str) -> Dict[str, Any]:
     }
 
 
+# 总结对话内容
 def summarize_conversation(notes: str) -> Dict[str, Any]:
     """Summarize interview or assistant conversation notes."""
     text = notes.strip()
@@ -92,6 +98,7 @@ def summarize_conversation(notes: str) -> Dict[str, Any]:
     }
 
 
+# 根据用户回答匹配知识库名称
 def match_knowledge_base_name(question: str, knowledge_base_names: List[str] | str) -> Dict[str, Any]:
     """Match a user question to a knowledge base name."""
     names = _normalize_names(knowledge_base_names)

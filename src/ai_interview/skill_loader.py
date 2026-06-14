@@ -8,28 +8,36 @@ import yaml
 
 from .llm import build_prompt, invoke_llm_json, require_llm_ready
 
+'''
+扫描目录、解析 YAML、工具路由
+'''
 
+
+# 技能摘要
 @dataclass(frozen=True)
 class ToolSkillSummary:
     name: str
     description: str
 
 
+# 技能详细描述
 @dataclass(frozen=True)
 class ToolSkill:
     name: str
     description: str
-    func: str
-    parameters: Dict[str, Any]
-    content: str
+    func: str  # 函数路径
+    parameters: Dict[str, Any]  # 调用参数
+    content: str  # 提示词主体
 
 
+# 查找所有SKILL.md
 def _skill_paths(skill_dir: Path) -> List[Path]:
     if not skill_dir.exists():
         return []
     return sorted(skill_dir.glob("*/SKILL.md"))
 
 
+# 分别获取元数据与正文
 def _front_matter(path: Path) -> tuple[str, str]:
     content = path.read_text(encoding="utf-8")
     if not content.startswith("---"):
@@ -38,10 +46,12 @@ def _front_matter(path: Path) -> tuple[str, str]:
     return front_matter.strip(), body.strip()
 
 
+# 提取SKILL.md中的name、description字段内容
 def _summary_from_front_matter(path: Path) -> ToolSkillSummary:
-    in_front_matter = False
+    in_front_matter = False  # 提取摘要部分（name、description）标记
     name = ""
     description = ""
+    # 逐行解析md文档
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if line == "---":
@@ -62,21 +72,23 @@ def _summary_from_front_matter(path: Path) -> ToolSkillSummary:
     return ToolSkillSummary(name=name, description=description)
 
 
+# 遍历所有SKILL.md
 def list_skill_summaries(skill_dir: Path) -> List[ToolSkillSummary]:
     return [_summary_from_front_matter(path) for path in _skill_paths(skill_dir)]
 
 
+# 根据传入的Skill名获取其完整信息
 def load_skill(skill_dir: Path, name: str) -> ToolSkill:
     for path in _skill_paths(skill_dir):
-        summary = _summary_from_front_matter(path)
+        summary = _summary_from_front_matter(path)  # 提取摘要字段
         if summary.name != name:
             continue
-        front_matter, body = _front_matter(path)
+        front_matter, body = _front_matter(path)  # 获取元数据和正文
         data = yaml.safe_load(front_matter) or {}
         parameters = data.get("parameters") or {}
         if not isinstance(parameters, dict):
             raise ValueError(f"{path} parameters must be an object")
-        return ToolSkill(
+        return ToolSkill(  # 构建工具对象
             name=str(data.get("name") or summary.name),
             description=str(data.get("description") or summary.description),
             func=str(data.get("func") or ""),
@@ -86,6 +98,7 @@ def load_skill(skill_dir: Path, name: str) -> ToolSkill:
     raise ValueError(f"tool skill not found: {name}")
 
 
+# 动态导入SKILL.md中的函数脚本
 def resolve_func(func_path: str) -> Callable[..., Any]:
     if ":" not in func_path:
         raise ValueError(f"invalid func path: {func_path}")
@@ -97,14 +110,16 @@ def resolve_func(func_path: str) -> Callable[..., Any]:
     return func
 
 
+# 技能选择（LLM+关键词匹配）
 def select_skill_names(
-    user_message: str,
-    summaries: List[ToolSkillSummary],
-    max_tools: int = 4,
+        user_message: str,  # 用户消息
+        summaries: List[ToolSkillSummary],  # 可用技能摘要列表
+        max_tools: int = 4,  # 最大返回工具数
 ) -> List[str]:
     if not summaries:
         return []
 
+    # 根据LLM语义理解选择工具
     names = [item.name for item in summaries]
     llm_selected: List[str] = []
     try:
@@ -135,13 +150,15 @@ def select_skill_names(
     except Exception:
         pass
 
-    lowered = user_message.lower()
+    # 关键词匹配选择工具
+    lowered = user_message.lower()  # 用户消息转小写
     keyword_selected: List[str] = []
 
     def add_if_available(name: str) -> None:
         if name in names and name not in keyword_selected:
             keyword_selected.append(name)
 
+    # TODO（硬编码）
     if any(marker in lowered for marker in ("简历", "resume", "候选人")):
         add_if_available("analyze_resume")
     if any(marker in lowered for marker in ("生成问题", "出题", "面试问题", "question")):
@@ -157,6 +174,8 @@ def select_skill_names(
     if any(marker in lowered for marker in ("知识库名称", "匹配知识库", "路由", "选择知识库")):
         add_if_available("match_knowledge_base_name")
 
+    # 不同工具不同得分
+    # TODO（硬编码）
     scored: List[tuple[int, str]] = []
     for item in summaries:
         haystack = f"{item.name} {item.description}".lower()
@@ -184,10 +203,10 @@ def select_skill_names(
     merged: List[str] = []
     for candidate in [*llm_selected, *keyword_selected, *[name for _, name in scored]]:
         if candidate in names and candidate not in merged:
-            merged.append(candidate)
+            merged.append(candidate)  # 三种方式获取到的工具进行去重合并
         if len(merged) >= max_tools:
             break
 
     if merged:
         return merged[:max_tools]
-    return names[: min(max_tools, len(names))]
+    return names[: min(max_tools, len(names))]  # 如果没有匹配到，返回前n个skill

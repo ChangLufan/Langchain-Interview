@@ -3,16 +3,22 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 from .config import RESUME_EXTENSIONS
+'''
+简历文件解析、路径判断、简历文本清洗`
+'''
 
-
+# 判断简历路径
 def looks_like_resume_path(value: str) -> bool:
-    normalized = value.strip().strip("\"'")
-    path = Path(normalized)
+    normalized = value.strip().strip("\"'")  # 去除引号
+    path = Path(normalized)  # 转换为 Path 对象
+    # 检测简历文件后缀
     if path.suffix.lower() in RESUME_EXTENSIONS:
         return True
+    # 检测文件名是否换行、长度超过 260 个字符
     if "\n" in normalized or len(normalized) > 260:
         return False
     return bool(
+        # 匹配 Windows 路径
         re.match(r"^[A-Za-z]:\\", normalized)
         or normalized.startswith(("./", "../", ".\\", "..\\", "/", "\\"))
     )
@@ -28,6 +34,7 @@ def import_tika_parser():
     return parser
 
 
+# 清洗简历文本
 def clean_resume_text(text: str) -> str:
     text = text.replace("\x00", " ")
     text = re.sub(r"\r\n?", "\n", text)
@@ -36,6 +43,7 @@ def clean_resume_text(text: str) -> str:
     return text.strip()
 
 
+# 加载简历
 def load_resume_text(resume_source: str) -> Tuple[str, Dict[str, Any]]:
     raw_value = (resume_source or "").strip()
     if not raw_value:
@@ -44,6 +52,7 @@ def load_resume_text(resume_source: str) -> Tuple[str, Dict[str, Any]]:
     normalized_value = raw_value.strip("\"'")
     path = Path(normalized_value).expanduser()
 
+    # Tika解析提取文本和元数据
     if path.exists() and path.is_file():
         parser = import_tika_parser()
         try:
@@ -61,10 +70,11 @@ def load_resume_text(resume_source: str) -> Tuple[str, Dict[str, Any]]:
             "source_name": path.name,
             "content_type": metadata.get("Content-Type"),
         }
-
+    # 未找到文件抛出异常
     if looks_like_resume_path(normalized_value):
         raise FileNotFoundError(f"简历文件不存在：{normalized_value}")
 
+    # 纯文本清洗后
     return clean_resume_text(raw_value), {
         "source_type": "text",
         "source_name": "inline_text",

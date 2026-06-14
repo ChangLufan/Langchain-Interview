@@ -6,6 +6,10 @@ from .config import MAX_TOOL_ROUNDS
 from .llm import AIMessage, HumanMessage, ToolMessage, build_prompt, llm, normalize_content, require_llm_ready
 from .mcp_server import MCPServer
 
+'''
+与LLM对话、管理工具调用流程
+'''
+
 
 class MCPClient:
     """与 MCPServer 和 LLM 协作完成工具调用。"""
@@ -14,15 +18,17 @@ class MCPClient:
         self.server = server
         self.tools_schema: Optional[List[Dict[str, Any]]] = None
 
+    # 根据用户消息选择工具
     def get_tools_for_llm(self, user_message: str = "") -> List[Dict[str, Any]]:
         return self.server.list_tools(user_message)
 
     def chat_with_tools_detail(
-        self,
-        user_message: str,
-        tool_selection_message: str = "",
+            self,
+            user_message: str,
+            tool_selection_message: str = "",
     ) -> Dict[str, Any]:
         result = None
+        # 流式响应
         for event in self.stream_chat_with_tools_events(user_message, tool_selection_message):
             if event["event"] == "done":
                 result = event["data"]
@@ -37,10 +43,11 @@ class MCPClient:
     def chat_with_tools(self, user_message: str) -> str:
         return self.chat_with_tools_detail(user_message)["answer"]
 
+    # 流式处理，ReAct循环
     def stream_chat_with_tools_events(
-        self,
-        user_message: str,
-        tool_selection_message: str = "",
+            self,
+            user_message: str,
+            tool_selection_message: str = "",
     ) -> Iterator[Dict[str, Any]]:
         require_llm_ready()
         if HumanMessage is None or ToolMessage is None or AIMessage is None:
@@ -59,6 +66,7 @@ class MCPClient:
         messages: List[Any] = [HumanMessage(content=user_message)]
         tools_used: List[str] = []
 
+        # 多轮工具调用循环
         for _ in range(MAX_TOOL_ROUNDS):
             accumulated = None
             streamed_text_parts: List[str] = []
@@ -74,7 +82,8 @@ class MCPClient:
 
             tool_calls = list(getattr(accumulated, "tool_calls", []) or [])
             if not tool_calls:
-                final_answer = "".join(streamed_text_parts).strip() or normalize_content(getattr(accumulated, "content", "")).strip()
+                final_answer = "".join(streamed_text_parts).strip() or normalize_content(
+                    getattr(accumulated, "content", "")).strip()
                 print(f"AI：{final_answer}")
                 yield {
                     "event": "done",
@@ -97,6 +106,7 @@ class MCPClient:
             )
             messages.append(ai_message)
 
+            # 执行工具调用
             for tool_call in tool_calls:
                 tool_name = tool_call["name"]
                 arguments = self._normalize_tool_args(tool_call.get("args"))
@@ -110,8 +120,9 @@ class MCPClient:
 
         raise RuntimeError(f"超过最大工具调用轮数 {MAX_TOOL_ROUNDS}，请缩小问题范围后重试。")
 
+    # 确定的工具调用链
     def _stream_planned_tool_chain(self, user_message: str, tool_names: List[str]) -> Iterator[Dict[str, Any]]:
-        ordered_tools = self._ordered_tool_names(tool_names)
+        ordered_tools = self._ordered_tool_names(tool_names)  # 工具调用优先级
         context: Dict[str, Any] = {
             "raw_message": user_message,
             "position": self._extract_position_hint(user_message),
@@ -180,6 +191,7 @@ class MCPClient:
                 names.append(name)
         return names
 
+    # 工具组合
     @staticmethod
     def _should_use_planned_chain(tool_names: List[str]) -> bool:
         required_pairs = [
@@ -190,15 +202,16 @@ class MCPClient:
         selected = set(tool_names)
         return any(pair.issubset(selected) for pair in required_pairs)
 
+    # 工具调用优先级排序
     @staticmethod
     def _ordered_tool_names(tool_names: List[str]) -> List[str]:
         priority = {
-            "analyze_resume": 10,
-            "summarize_conversation": 20,
-            "extract_job_requirements": 30,
-            "evaluate_answer": 40,
-            "improve_interview_answer": 50,
-            "generate_questions": 60,
+            "analyze_resume": 10,  # 分析简历
+            "summarize_conversation": 20,  # 总结对话
+            "extract_job_requirements": 30,  # 提取职位要求
+            "evaluate_answer": 40,  # 评价回答
+            "improve_interview_answer": 50,  # 改进回答
+            "generate_questions": 60,  # 生成问题
         }
         unique_names: List[str] = []
         for name in tool_names:
@@ -206,6 +219,7 @@ class MCPClient:
                 unique_names.append(name)
         return sorted(unique_names, key=lambda name: priority.get(name, 100))
 
+    # 参数构建
     def _build_planned_tool_args(self, tool_name: str, context: Dict[str, Any]) -> Dict[str, Any]:
         raw_message = str(context.get("raw_message", ""))
         if tool_name == "summarize_conversation":
@@ -217,9 +231,10 @@ class MCPClient:
         if tool_name == "generate_questions":
             position = self._extract_position_hint(raw_message) or str(context.get("position", "")).strip() or "技术面试岗位"
             resume_summary = (
-                str(context.get("analysis_summary") or context.get("summary") or context.get("resume_summary") or "")
-                .strip()
-                or raw_message[:4000]
+                    str(context.get("analysis_summary") or context.get("summary") or context.get(
+                        "resume_summary") or "")
+                    .strip()
+                    or raw_message[:4000]
             )
             return {
                 "position": position,
@@ -237,6 +252,7 @@ class MCPClient:
             }
         return {}
 
+    # 从文本中提取职位
     @staticmethod
     def _extract_position_hint(text: str) -> str:
         candidates = [
@@ -251,16 +267,19 @@ class MCPClient:
                 return match.group(1).strip()
         return ""
 
+    # 从文本中提取问题
     @staticmethod
     def _extract_question_hint(text: str) -> str:
         match = re.search(r"问题[:：]\s*([^\n]+)", text)
         return match.group(1).strip() if match else text[:500]
 
+    # 从文本中提取答案
     @staticmethod
     def _extract_answer_hint(text: str) -> str:
         match = re.search(r"回答[:：]\s*([^\n]+)", text)
         return match.group(1).strip() if match else ""
 
+    # 解析工具结果
     @staticmethod
     def _parse_tool_result(result_str: str) -> Dict[str, Any]:
         try:
@@ -269,12 +288,13 @@ class MCPClient:
         except Exception:
             return {"text": result_str}
 
+    # 根据工具名更新上下文
     def _update_planned_context(
-        self,
-        tool_name: str,
-        parsed_result: Dict[str, Any],
-        context: Dict[str, Any],
-        raw_result: str,
+            self,
+            tool_name: str,
+            parsed_result: Dict[str, Any],
+            context: Dict[str, Any],
+            raw_result: str,
     ) -> None:
         if tool_name == "analyze_resume":
             context["analysis_summary"] = str(parsed_result.get("summary", "")).strip()
@@ -301,11 +321,12 @@ class MCPClient:
             }
         )
 
+    # 构建计划生成的最终提示词
     def _build_planned_final_prompt(
-        self,
-        user_message: str,
-        tool_results: List[Dict[str, Any]],
-        context: Dict[str, Any],
+            self,
+            user_message: str,
+            tool_results: List[Dict[str, Any]],
+            context: Dict[str, Any],
     ):
         tool_summary = json.dumps(tool_results, ensure_ascii=False, indent=2)
         system_message = (
@@ -320,6 +341,7 @@ class MCPClient:
         )
         return build_prompt([("system", system_message), ("human", human_message)])
 
+    # 格式化总结与问题
     @staticmethod
     def _format_planned_summary(tool_results: List[Dict[str, Any]], context: Dict[str, Any]) -> str:
         parts: List[str] = []
@@ -328,11 +350,13 @@ class MCPClient:
         if summary:
             parts.append(f"总结：{summary}")
         if questions:
-            parts.append("面试问题：\n" + "\n".join(f"{index + 1}. {question}" for index, question in enumerate(questions[:3])))
+            parts.append(
+                "面试问题：\n" + "\n".join(f"{index + 1}. {question}" for index, question in enumerate(questions[:3])))
         if not parts:
             parts.append("已完成多工具处理。")
         return "\n\n".join(parts)
 
+    # 标准化参数
     @staticmethod
     def _normalize_tool_args(arguments: Any) -> Dict[str, Any]:
         if isinstance(arguments, dict):
@@ -345,6 +369,7 @@ class MCPClient:
                 return {"value": arguments}
         return {}
 
+    # 生成消息历史快照
     @staticmethod
     def _message_history_snapshot(messages: List[Any], final_answer: str) -> List[Dict[str, str]]:
         history: List[Dict[str, str]] = []

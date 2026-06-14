@@ -34,14 +34,17 @@ KNOWLEDGE_BASE_SCAN_THRESHOLD = 5
 _LOCK = RLock()
 
 
+# 生成时间戳
 def _now_ms() -> int:
     return int(time.time() * 1000)
 
 
+#
 def _empty_state() -> Dict[str, Any]:
     return {"knowledge_bases": []}
 
 
+#
 def _load_state() -> Dict[str, Any]:
     RAG_DIR.mkdir(parents=True, exist_ok=True)
     if not STATE_PATH.exists():
@@ -77,6 +80,7 @@ def _decode_text(data: bytes) -> str:
     return data.decode("utf-8", errors="ignore")
 
 
+# Tika/纯文本解析
 def _extract_text(path: Path, data: bytes) -> str:
     suffix = path.suffix.lower()
     if suffix in {".txt", ".md", ".csv", ".json", ".html", ".htm"}:
@@ -91,6 +95,7 @@ def _extract_text(path: Path, data: bytes) -> str:
         raise
 
 
+# 字符分块
 def _chunk_text(text: str, size: int = 900, overlap: int = 160) -> List[str]:
     normalized = clean_resume_text(text)
     if not normalized:
@@ -109,22 +114,23 @@ def _chunk_text(text: str, size: int = 900, overlap: int = 160) -> List[str]:
     return chunks
 
 
+# 获取OSS配置
 def _oss_config() -> Dict[str, str]:
     config = get_app_config().get("alioss", {})
     return {
         "endpoint": os.getenv("ALIYUN_OSS_ENDPOINT") or os.getenv("OSS_ENDPOINT") or str(config.get("endpoint", "")),
         "bucket": os.getenv("ALIYUN_OSS_BUCKET")
-        or os.getenv("OSS_BUCKET_NAME")
-        or str(config.get("bucket-name", "")),
+                  or os.getenv("OSS_BUCKET_NAME")
+                  or str(config.get("bucket-name", "")),
         "access_key_id": os.getenv("ALIYUN_OSS_ACCESS_KEY_ID")
-        or os.getenv("OSS_ACCESS_KEY_ID")
-        or str(config.get("access-key-id", "")),
+                         or os.getenv("OSS_ACCESS_KEY_ID")
+                         or str(config.get("access-key-id", "")),
         "access_key_secret": os.getenv("ALIYUN_OSS_ACCESS_KEY_SECRET")
-        or os.getenv("OSS_ACCESS_KEY_SECRET")
-        or str(config.get("access-key-secret", "")),
+                             or os.getenv("OSS_ACCESS_KEY_SECRET")
+                             or str(config.get("access-key-secret", "")),
         "prefix": os.getenv("ALIYUN_OSS_PREFIX")
-        or os.getenv("OSS_PREFIX")
-        or str(config.get("prefix", "easy-langent/rag")),
+                  or os.getenv("OSS_PREFIX")
+                  or str(config.get("prefix", "easy-langent/rag")),
     }
 
 
@@ -160,27 +166,30 @@ def _store_object(local_path: Path, object_key: str) -> Dict[str, Any]:
     }
 
 
+# 上传知识库文件
 def upload_knowledge_file(filename: str, data: bytes, knowledge_base_name: str = "") -> Dict[str, Any]:
     if not data:
         raise ValueError("上传文件不能为空。")
 
-    safe_filename = _safe_name(filename)
-    knowledge_base_id = uuid.uuid4().hex
+    safe_filename = _safe_name(filename)  # 清理非法字符
+    knowledge_base_id = uuid.uuid4().hex  # 生成唯一ID
     tmp_dir = RAG_DIR / "tmp"
     tmp_dir.mkdir(parents=True, exist_ok=True)
     tmp_path = tmp_dir / f"{knowledge_base_id}_{safe_filename}"
-    tmp_path.write_bytes(data)
+    tmp_path.write_bytes(data)  # 写入临时文件夹方便Tika解析
 
     try:
-        text = _extract_text(tmp_path, data)
-        chunks = _chunk_text(text)
+        text = _extract_text(tmp_path, data)  # 提取纯文本
+        chunks = _chunk_text(text)  # 文本切块
         if not chunks:
             raise ValueError("文件中没有可用于问答的文本内容。")
 
-        prefix = _oss_config()["prefix"].strip("/")
+        # 对象存储
+        prefix = _oss_config()["prefix"].strip("/")  # 获取OSS文件夹路径前缀
         object_key = f"{prefix}/{knowledge_base_id}/{safe_filename}" if prefix else f"{knowledge_base_id}/{safe_filename}"
         object_info = _store_object(tmp_path, object_key)
 
+        # 构建知识库元数据
         created_at = _now_ms()
         kb = {
             "id": knowledge_base_id,
@@ -200,16 +209,18 @@ def upload_knowledge_file(filename: str, data: bytes, knowledge_base_name: str =
                 for index, chunk in enumerate(chunks)
             ],
         }
-        kb["database"] = _persist_vectors_to_postgres(kb)
+        kb["database"] = _persist_vectors_to_postgres(kb)  # 向量化存入数据库
 
+        # 线程锁，防止元数据并发写入
+        # TODO Redis缓存
         with _LOCK:
             state = _load_state()
             state["knowledge_bases"].insert(0, kb)
             _save_state(state)
-
+        # 返回给前端
         return _public_kb(kb)
     finally:
-        tmp_path.unlink(missing_ok=True)
+        tmp_path.unlink(missing_ok=True)  # 清理临时文件
 
 
 def _public_kb(kb: Dict[str, Any]) -> Dict[str, Any]:
@@ -227,9 +238,9 @@ def _public_kb(kb: Dict[str, Any]) -> Dict[str, Any]:
 
 def _persist_vectors_to_postgres(kb: Dict[str, Any]) -> Dict[str, Any]:
     try:
-        texts = [chunk["text"] for chunk in kb.get("chunks", [])]
-        embeddings = embed_texts(texts)
-        save_knowledge_base(kb, embeddings)
+        texts = [chunk["text"] for chunk in kb.get("chunks", [])]  # 提取分块文本
+        embeddings = embed_texts(texts)  # 向量化
+        save_knowledge_base(kb, embeddings)  # 存入PostgreSQL
         return {
             "stored": True,
             "chunk_count": len(embeddings),
@@ -254,7 +265,7 @@ def _tokens(text: str) -> List[str]:
     phrases = re.findall(r"[\u4e00-\u9fff]{2,}", lowered)
     bigrams: List[str] = []
     for phrase in phrases:
-        bigrams.extend(phrase[index : index + 2] for index in range(max(0, len(phrase) - 1)))
+        bigrams.extend(phrase[index: index + 2] for index in range(max(0, len(phrase) - 1)))
     return list(dict.fromkeys(latin + chinese + bigrams))
 
 
@@ -394,11 +405,11 @@ def _create_conversation(conversation_type: str, title: str, knowledge_base_id: 
 
 
 def _find_or_create_conversation(
-    state: Dict[str, Any],
-    conversation_id: str,
-    conversation_type: str,
-    title: str,
-    knowledge_base_id: str = "",
+        state: Dict[str, Any],
+        conversation_id: str,
+        conversation_type: str,
+        title: str,
+        knowledge_base_id: str = "",
 ) -> Dict[str, Any]:
     if conversation_id:
         for conversation in state["conversations"]:
@@ -422,7 +433,7 @@ def delete_conversation(conversation_id: str) -> Dict[str, Any]:
 
 
 def _format_history(messages: List[Dict[str, str]]) -> str:
-    recent = messages[-MAX_HISTORY_TURNS * 2 :]
+    recent = messages[-MAX_HISTORY_TURNS * 2:]
     lines = []
     for item in recent:
         role = "用户" if item.get("role") == "user" else "助手"
@@ -474,9 +485,9 @@ def _answer_with_llm(question: str, history: List[Dict[str, str]], sources: List
 
 
 def _stream_answer_with_llm(
-    question: str,
-    history: List[Dict[str, str]],
-    sources: List[Dict[str, Any]],
+        question: str,
+        history: List[Dict[str, str]],
+        sources: List[Dict[str, Any]],
 ) -> Iterator[str]:
     context_parts = _format_context_parts(sources)
     prompt = build_prompt(
@@ -495,12 +506,12 @@ def _stream_answer_with_llm(
         ]
     )
     for chunk in llm.stream(
-        prompt.format_messages(
-            history=_format_history(history),
-            context="\n\n".join(context_parts),
-            question=question,
-        ),
-        extra_body={"enable_thinking": False},
+            prompt.format_messages(
+                history=_format_history(history),
+                context="\n\n".join(context_parts),
+                question=question,
+            ),
+            extra_body={"enable_thinking": False},
     ):
         text = normalize_content(getattr(chunk, "content", ""))
         if text:
@@ -512,6 +523,7 @@ def _answer_with_tools(question: str, history: List[Dict[str, str]], sources: Li
     from .tools import server as mcp_server
 
     message = _build_tool_aware_message(question, history, sources)
+    # 将用户问题，会话历史，检索片段发送给MCP Client
     return MCPClient(mcp_server).chat_with_tools_detail(message, tool_selection_message=question)
 
 
@@ -539,9 +551,9 @@ def _fallback_answer(sources: List[Dict[str, Any]]) -> str:
 
 
 def _resolve_retrieval_scope(
-    state: Dict[str, Any],
-    knowledge_base_id: str,
-    question: str,
+        state: Dict[str, Any],
+        knowledge_base_id: str,
+        question: str,
 ) -> Tuple[str, str, List[Dict[str, Any]], List[Dict[str, Any]]]:
     knowledge_bases = state["knowledge_bases"]
     if not knowledge_bases:
@@ -561,21 +573,27 @@ def _resolve_retrieval_scope(
     return "all", ALL_KNOWLEDGE_BASES, knowledge_bases, _retrieve_all(knowledge_bases, question)
 
 
-def rag_chat(knowledge_base_id: str, message: str, conversation_id: str = "", conversation_type: str = "assistant") -> Dict[str, Any]:
+# RAG问答
+def rag_chat(knowledge_base_id: str, message: str, conversation_id: str = "", conversation_type: str = "assistant") -> \
+        Dict[str, Any]:
+    # 读取用户问题
     question = message.strip()
     if not question:
         raise ValueError("问题不能为空。")
     if knowledge_base_id == TOOLS_ONLY:
         raise ValueError("当前模式为普通问答，不能调用知识库检索。")
 
+    # 线程锁，读时防止修改
     with _LOCK:
         state = _load_state()
+        # route_mode不同知识库选择模式
         route_mode, resolved_knowledge_base_id, scoped_kbs, sources = _resolve_retrieval_scope(
             state,
             knowledge_base_id,
             question,
         )
 
+    # 加载会话历史
     history_before: List[Dict[str, str]] = []
     if conversation_id:
         try:
@@ -584,16 +602,17 @@ def rag_chat(knowledge_base_id: str, message: str, conversation_id: str = "", co
             history_before = []
 
     try:
-        require_llm_ready()
+        require_llm_ready()  # 确保LLM存在
         if HumanMessage is None:
             raise RuntimeError("缺少 langchain_core，无法调用 LLM。")
-        answer_payload = _answer_with_tools(question, history_before, sources)
-        answer = answer_payload["answer"]
-        tools_used = answer_payload.get("tools_used", [])
+        answer_payload = _answer_with_tools(question, history_before, sources)  # 历史、检索片段、问题发送MCP Client
+        answer = answer_payload["answer"]  # 返回回答
+        tools_used = answer_payload.get("tools_used", []) # 返回工具使用情况
     except Exception:
         answer = _fallback_answer(sources)
         tools_used = []
 
+    # 保存会话
     saved_conversation = save_db_conversation_exchange(
         message=question,
         answer=answer,
@@ -604,6 +623,7 @@ def rag_chat(knowledge_base_id: str, message: str, conversation_id: str = "", co
     )
 
     return {
+        # 结果展示给前端
         "conversation_id": saved_conversation["id"],
         "answer": answer,
         "sources": sources,
@@ -618,10 +638,10 @@ def rag_chat(knowledge_base_id: str, message: str, conversation_id: str = "", co
 
 
 def rag_chat_stream_events(
-    knowledge_base_id: str,
-    message: str,
-    conversation_id: str = "",
-    conversation_type: str = "assistant",
+        knowledge_base_id: str,
+        message: str,
+        conversation_id: str = "",
+        conversation_type: str = "assistant",
 ) -> Iterator[Dict[str, Any]]:
     question = message.strip()
     if not question:
@@ -662,7 +682,9 @@ def rag_chat_stream_events(
         from .mcp_client import MCPClient
         from .tools import server as mcp_server
 
+        # 组装prompt
         tool_message = _build_tool_aware_message(question, history_before, sources)
+        # MCPClient流式调用
         for item in MCPClient(mcp_server).stream_chat_with_tools_events(tool_message, tool_selection_message=question):
             if item["event"] == "tool":
                 tool_name = item["data"]["name"]
@@ -682,6 +704,7 @@ def rag_chat_stream_events(
 
     answer = "".join(answer_parts)
     all_sources = [*sources, *_tool_sources(tools_used)]
+    # 持久化存储
     saved_conversation = save_db_conversation_exchange(
         message=question,
         answer=answer,
@@ -690,6 +713,7 @@ def rag_chat_stream_events(
         knowledge_base_id=resolved_knowledge_base_id,
         sources=all_sources,
     )
+    # SSE 流式推送前端
     yield {
         "event": "done",
         "data": {
@@ -705,7 +729,7 @@ def rag_chat_stream_events(
 
 def _text_chunks(text: str, size: int = 28) -> Iterator[str]:
     for index in range(0, len(text), size):
-        yield text[index : index + size]
+        yield text[index: index + size]
 
 
 def mcp_chat_stream_events(message: str, conversation_id: str = "") -> Iterator[Dict[str, Any]]:
@@ -728,7 +752,8 @@ def mcp_chat_stream_events(message: str, conversation_id: str = "") -> Iterator[
         question_for_tools = question
     answer_parts: List[str] = []
     tools_used: List[str] = []
-    for item in MCPClient(mcp_server).stream_chat_with_tools_events(question_for_tools, tool_selection_message=question):
+    for item in MCPClient(mcp_server).stream_chat_with_tools_events(question_for_tools,
+                                                                    tool_selection_message=question):
         if item["event"] == "tool":
             tool_name = item["data"]["name"]
             if tool_name not in tools_used:
@@ -767,10 +792,10 @@ def _tool_sources(tools_used: List[str]) -> List[Dict[str, Any]]:
 
 
 def save_mcp_exchange(
-    message: str,
-    answer: str,
-    conversation_id: str = "",
-    tools_used: List[str] | None = None,
+        message: str,
+        answer: str,
+        conversation_id: str = "",
+        tools_used: List[str] | None = None,
 ) -> Dict[str, Any]:
     tools_used = tools_used or []
     conversation = save_db_conversation_exchange(

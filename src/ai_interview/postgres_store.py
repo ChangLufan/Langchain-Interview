@@ -214,9 +214,9 @@ def search_chunks(knowledge_base_id: str, query_embedding: List[float], limit: i
 
 
 def search_chunks_across_knowledge_bases(
-    knowledge_base_ids: List[str],
-    query_embedding: List[float],
-    limit: int = 5,
+        knowledge_base_ids: List[str],
+        query_embedding: List[float],
+        limit: int = 5,
 ) -> List[Dict[str, Any]]:
     if not knowledge_base_ids:
         return []
@@ -356,12 +356,12 @@ def delete_conversation(conversation_id: str) -> Dict[str, Any]:
 
 
 def save_conversation_exchange(
-    message: str,
-    answer: str,
-    conversation_id: str = "",
-    conversation_type: str = "assistant",
-    knowledge_base_id: str = "",
-    sources: List[Dict[str, Any]] | None = None,
+        message: str,
+        answer: str,
+        conversation_id: str = "",
+        conversation_type: str = "assistant",
+        knowledge_base_id: str = "",
+        sources: List[Dict[str, Any]] | None = None,
 ) -> Dict[str, Any]:
     ensure_schema()
     conversation_id = conversation_id or uuid.uuid4().hex

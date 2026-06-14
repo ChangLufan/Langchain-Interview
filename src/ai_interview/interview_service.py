@@ -4,6 +4,10 @@ from .config import MAX_RESUME_CHARS
 from .llm import build_prompt, invoke_llm_json
 from .resume_loader import load_resume_text
 
+'''
+简历分析、面试、评价
+'''
+
 
 def analyze_resume(resume_text: str) -> Dict[str, Any]:
     """使用 Tika 解析简历文件或直接分析传入的简历文本。"""
@@ -23,8 +27,9 @@ def analyze_resume(resume_text: str) -> Dict[str, Any]:
             ("human", "简历文本如下：\n{resume_content}"),
         ]
     )
-    result = invoke_llm_json(prompt, resume_content=parsed_text[:MAX_RESUME_CHARS])
+    result = invoke_llm_json(prompt, resume_content=parsed_text[:MAX_RESUME_CHARS])  # 截取简历文本前6000个字符
 
+    # 解析 JSON
     summary = str(result.get("summary", "")).strip()
     highlights = [str(item).strip() for item in result.get("highlights", []) if str(item).strip()]
     risk_flags = [str(item).strip() for item in result.get("risk_flags", []) if str(item).strip()]
@@ -65,6 +70,7 @@ def generate_questions(position: str, resume_summary: str) -> Dict[str, Any]:
     )
     result = invoke_llm_json(prompt, position=position.strip(), resume_summary=resume_summary.strip())
 
+    # 生成面试问题
     questions: List[str] = []
     for item in result.get("questions", []):
         question = item.get("question") if isinstance(item, dict) else item
@@ -107,16 +113,16 @@ def evaluate_answer(question: str, answer: str) -> Dict[str, Any]:
         ]
     )
     result = invoke_llm_json(prompt, question=question.strip(), answer=answer.strip())
-
+    # 处理分数
     raw_score = result.get("score", 0)
     try:
         score = max(0, min(100, int(float(raw_score))))
     except (TypeError, ValueError):
         score = 0
 
-    missing_points = [str(item).strip() for item in result.get("missing_points", []) if str(item).strip()]
-    feedback = str(result.get("feedback", "")).strip() or "未获得有效评语。"
-    is_correct = bool(result.get("is_correct", score >= 60))
+    missing_points = [str(item).strip() for item in result.get("missing_points", []) if str(item).strip()]  # 回答缺少点
+    feedback = str(result.get("feedback", "")).strip() or "未获得有效评语。"  # 回答反馈
+    is_correct = bool(result.get("is_correct", score >= 60))  # 是否正确，正确评分高于 60
 
     return {
         "is_correct": is_correct,
@@ -128,15 +134,16 @@ def evaluate_answer(question: str, answer: str) -> Dict[str, Any]:
 
 def conduct_interview(position: str, resume_source: str) -> Dict[str, Any]:
     """生成问题后通过 CLI 获取候选人回答，再逐题评分。"""
-    analysis = analyze_resume(resume_source)
-    question_payload = generate_questions(position, analysis["summary"])
-    questions = question_payload["questions"]
+    analysis = analyze_resume(resume_source)  # 分析简历产生简历摘要、亮点、风险点
+    question_payload = generate_questions(position, analysis["summary"])  # 根据岗位和简历摘要生成面试问题
+    questions = question_payload["questions"]  # 获取面试问题
 
     evaluations: List[Dict[str, Any]] = []
+    # 逐题获取候选人回答并评价
     for index, question in enumerate(questions, start=1):
         print(f"\n问题 {index}: {question}")
         answer = input("候选人回答：").strip()
-        evaluation = evaluate_answer(question, answer)
+        evaluation = evaluate_answer(question, answer)  # 评价候选人回答
         evaluations.append(
             {
                 "question": question,
@@ -145,6 +152,7 @@ def conduct_interview(position: str, resume_source: str) -> Dict[str, Any]:
             }
         )
 
+    # 计算平均分
     average_score = 0
     if evaluations:
         average_score = round(

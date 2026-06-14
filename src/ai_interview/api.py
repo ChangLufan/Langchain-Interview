@@ -96,6 +96,7 @@ def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
+# 文本简历分析出题
 @app.post("/api/interview/from-text", response_model=InterviewStartResponse)
 def start_interview_from_text(payload: ResumeTextRequest) -> Dict[str, Any]:
     try:
@@ -110,11 +111,12 @@ def start_interview_from_text(payload: ResumeTextRequest) -> Dict[str, Any]:
     }
 
 
+# 文件简历分析出题
 @app.post("/api/interview/upload", response_model=InterviewStartResponse)
 async def start_interview_from_upload(
-    request: Request,
-    position: str = Query(..., min_length=1),
-    filename: str = Query("resume.pdf"),
+        request: Request,
+        position: str = Query(..., min_length=1),
+        filename: str = Query("resume.pdf"),
 ) -> Dict[str, Any]:
     data = await request.body()
     if not data:
@@ -140,6 +142,7 @@ async def start_interview_from_upload(
     }
 
 
+# 单独出题
 @app.post("/api/questions")
 def create_questions(payload: QuestionRequest) -> Dict[str, Any]:
     try:
@@ -148,6 +151,7 @@ def create_questions(payload: QuestionRequest) -> Dict[str, Any]:
         raise _safe_error(exc) from exc
 
 
+# 单题评估
 @app.post("/api/evaluate")
 def evaluate(payload: EvaluationRequest) -> Dict[str, Any]:
     try:
@@ -156,16 +160,18 @@ def evaluate(payload: EvaluationRequest) -> Dict[str, Any]:
         raise _safe_error(exc) from exc
 
 
+# 知识库列表
 @app.get("/api/rag/knowledge-bases")
 def knowledge_bases() -> Dict[str, Any]:
     return {"items": list_knowledge_bases()}
 
 
+# 上传知识库
 @app.post("/api/rag/knowledge-bases")
 async def create_knowledge_base(
-    request: Request,
-    filename: str = Query(..., min_length=1),
-    name: str = Query(""),
+        request: Request,
+        filename: str = Query(..., min_length=1),
+        name: str = Query(""),
 ) -> Dict[str, Any]:
     data = await request.body()
     try:
@@ -174,11 +180,13 @@ async def create_knowledge_base(
         raise _safe_error(exc) from exc
 
 
+# 会话列表
 @app.get("/api/conversations")
 def conversations(type: str = Query("")) -> Dict[str, Any]:
     return {"items": list_conversations(type)}
 
 
+# 会话详情
 @app.get("/api/conversations/{conversation_id}")
 def conversation_detail(conversation_id: str) -> Dict[str, Any]:
     try:
@@ -187,6 +195,7 @@ def conversation_detail(conversation_id: str) -> Dict[str, Any]:
         raise _safe_error(exc) from exc
 
 
+# 删除会话
 @app.delete("/api/conversations/{conversation_id}")
 def remove_conversation(conversation_id: str) -> Dict[str, Any]:
     try:
@@ -195,6 +204,7 @@ def remove_conversation(conversation_id: str) -> Dict[str, Any]:
         raise _safe_error(exc) from exc
 
 
+#  纯 rag 知识库检索聊天
 @app.post("/api/rag/chat")
 def chat_with_rag(payload: RagChatRequest) -> Dict[str, Any]:
     try:
@@ -207,6 +217,7 @@ def chat_with_rag(payload: RagChatRequest) -> Dict[str, Any]:
         raise _safe_error(exc) from exc
 
 
+# 纯 mcp 工具调用聊天
 @app.post("/api/mcp/chat")
 def chat_with_mcp(payload: McpChatRequest) -> Dict[str, Any]:
     try:
@@ -222,6 +233,7 @@ def chat_with_mcp(payload: McpChatRequest) -> Dict[str, Any]:
         raise _safe_error(exc) from exc
 
 
+# RAG+MCP融合聊天
 @app.post("/api/assistant/chat")
 def chat_with_assistant(payload: AssistantChatRequest) -> Dict[str, Any]:
     try:
@@ -244,7 +256,7 @@ def chat_with_assistant(payload: AssistantChatRequest) -> Dict[str, Any]:
     except Exception as exc:
         raise _safe_error(exc) from exc
 
-
+# RAG+MCP流式输出聊天（默认）
 @app.post("/api/assistant/chat/stream")
 def stream_chat_with_assistant(payload: AssistantChatRequest) -> StreamingResponse:
     def event_stream():
