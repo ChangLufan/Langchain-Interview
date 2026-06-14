@@ -209,4 +209,4 @@ def select_skill_names(
 
     if merged:
         return merged[:max_tools]
-    return names[: min(max_tools, len(names))]  # 如果没有匹配到，返回前n个skill
+    return names[: min(max_tools, len(names))]
